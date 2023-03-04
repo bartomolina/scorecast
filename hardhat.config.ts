@@ -1,13 +1,49 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+require("@openzeppelin/hardhat-upgrades")
 require("dotenv").config();
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.17",
-  defaultNetwork: "localhost",
+  solidity: {
+    compilers: [
+      {
+        version: "0.8.7",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1_000,
+          },
+        },
+      },
+      {
+        version: "0.6.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1_000,
+          },
+        },
+      },
+      {
+        version: "0.4.24",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1_000,
+          },
+        },
+      },
+    ],
+  },
   networks: {
-    goerli: {
-      url: `https://eth-goerli.g.alchemy.com/v2/${process.env.ALCHEMY_GOERLI_API}`,
+    hardhat: {
+      hardfork: "merge",
+      forking: {
+        url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_MUMBAI_API}`,
+      },
+    },
+    mumbai: {
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_MUMBAI_API}`,
       accounts: [process.env.PRIVATE_KEY],
     },
   },
