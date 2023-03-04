@@ -1,13 +1,12 @@
-
 const { NodeVM, VMScript } = require("vm2")
 
 const functions = require("./Functions")
 
-async function evaluate(code) {
+async function evaluate(code, args, secrets) {
   const functionsModule = new functions.FunctionsModule((url) => url, null)
   const Functions = functionsModule.buildFunctionsmodule(5)
   const vm = new NodeVM({
-    sandbox: { args: ['ETH', 'USD'], Functions },
+    sandbox: { args, Functions, secrets },
     eval: false,
     require: {
       builtin: ["buffer", "crypto", "querystring", "string_decoder", "url", "util"],

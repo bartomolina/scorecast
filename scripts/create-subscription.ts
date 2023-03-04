@@ -1,5 +1,5 @@
 const hre = require("hardhat");
-const { networkConfig } = require("../network-config.ts");
+const { networkConfig } = require("../config.ts");
 
 const LINK_FUNDING_AMOUNT = "1";
 

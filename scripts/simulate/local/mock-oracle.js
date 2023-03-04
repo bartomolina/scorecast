@@ -1,4 +1,4 @@
-const { networkConfig } = require("../../../network-config.ts");
+const { networkConfig } = require("../../../config.ts");
 
 const deployMockOracle = async () => {
   // Deploy a mock LINK token contract

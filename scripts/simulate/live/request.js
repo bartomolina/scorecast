@@ -4,7 +4,7 @@ const axios = require('axios')
 const fs = require('fs').promises
 const dotenv = require('dotenv').config()
 const prompt = require('prompt-sync')()
-
+const { config } = require("../../../config.ts");
 
 async function main() {
 
@@ -48,8 +48,8 @@ async function main() {
 
 
   // Default example
-  const source = await fs.readFile('./scripts/simulate/script.js', 'utf8')
-  const args = ["ETH", "USD"]
+  const source = await fs.readFile(`./scripts/simulate/scripts/${config.script}`, 'utf8')
+  const args = config.args
 
   // Tutorial 6
   //const source = await fs.readFile('./examples/Functions-source-inline-secrets.js', 'utf8')

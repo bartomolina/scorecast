@@ -1,3 +1,14 @@
+require("dotenv").config()
+
+const config = {
+  script: "api-football.js",
+  args: ["541", "2022", "2023-02-18"],
+  secrets: { rapidapikey: process.env.RAPIDAPI_KEY },
+  walletPrivateKey: process.env.PRIVATE_KEY,
+  // script: "test-script.js",
+  // args: ["ETH", "USD"],
+}
+
 const networkConfig = {
   hardhat: {
     functionsPublicKey:
@@ -12,4 +23,5 @@ const networkConfig = {
 
 module.exports = {
   networkConfig,
+  config,
 };

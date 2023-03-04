@@ -2,6 +2,7 @@ const fs = require("fs")
 
 // Loads environment variables from .env file (if it exists)
 require("dotenv").config()
+const { config } = require("../../../config.ts");
 
 const Location = {
   Inline: 0,
@@ -31,9 +32,13 @@ const requestConfig = {
   // code language (only JavaScript is currently supported)
   codeLanguage: CodeLanguage.JavaScript,
   // string containing the source code to be executed
-  source: fs.readFileSync("scripts/simulate/script.js").toString(),
+  source: fs.readFileSync(`scripts/simulate/scripts/${config.script}`).toString(),
   // args can be accessed within the source code with `args[index]` (ie: args[0])
-  args: ["ETH", "USD"],
+  args: config.args,
+  // secrets
+  secrets: config.secrets,
+  // wallet private key
+  walletPrivateKey: config.walletPrivateKey,
   // expected type of the returned value
   expectedReturnType: ReturnType.uint256,
 }
