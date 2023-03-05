@@ -3,7 +3,7 @@ const deployMockOracle = require("./mock-oracle");
 const evaluate = require("./sandbox")
 const EthCrypto = require('eth-crypto');
 
-const CONSUMER_CONTRACT_NAME = "FunctionsConsumer";
+const CONSUMER_CONTRACT_NAME = "ScoreCast";
 const GAS_LIMIT = 100000;
 
 async function main() {
@@ -33,39 +33,38 @@ async function main() {
   // Build the parameters to make a request from the client contract
   const requestConfig = require("./request-config.js");
 
-
-
-
   // Fetch the mock DON public key
   const DONPublicKey = await oracle.getDONPublicKey();
   // Remove the preceding 0x from the DON public key
   requestConfig.DONPublicKey = DONPublicKey.slice(2);
 
   // Build secrets
-  const signature = EthCrypto.default.sign(requestConfig.walletPrivateKey, EthCrypto.default.hash.keccak256(JSON.stringify(requestConfig.secrets)))
-  const payload = {
-    message: JSON.stringify(config.secrets),
-    signature,
-  };
-  const encrypted = await EthCrypto.default.encryptWithPublicKey(requestConfig.DONPublicKey, JSON.stringify(payload));
-  const encryptedSecrets = "0x" + EthCrypto.default.cipher.stringify(encrypted);
+  if (requestConfig.secrets && requestConfig.walletPrivateKey) {
+    const signature = EthCrypto.default.sign(requestConfig.walletPrivateKey, EthCrypto.default.hash.keccak256(JSON.stringify(requestConfig.secrets)))
+    const payload = {
+      message: JSON.stringify(config.secrets),
+      signature,
+    };
+    const encrypted = await EthCrypto.default.encryptWithPublicKey(requestConfig.DONPublicKey, JSON.stringify(payload));
+    const encryptedSecrets = "0x" + EthCrypto.default.cipher.stringify(encrypted);
+  }
 
   // Make a request to the Oracle & simulate a fulfillment
   await new Promise(async (resolve) => {
     // Initiate the request from the client contract
     // REMOVE: needed? we have client already
-    const clientContract = await clientFactory.attach(client.address);
-    const requestTx = await clientContract.executeRequest(
-      requestConfig.source,
-      encryptedSecrets ?? [],
-      requestConfig.secretsLocation,
-      requestConfig.args ?? [],
-      subscriptionId,
-      GAS_LIMIT
-    );
-    const requestTxReceipt = await requestTx.wait(1);
-    const requestId = requestTxReceipt.events[2].args.id;
-    const requestGasUsed = requestTxReceipt.gasUsed.toString();
+    // const clientContract = await clientFactory.attach(client.address);
+    // const requestTx = await clientContract.executeRequest(
+    //   requestConfig.source,
+    //   encryptedSecrets ?? [],
+    //   requestConfig.secretsLocation,
+    //   requestConfig.args ?? [],
+    //   subscriptionId,
+    //   GAS_LIMIT
+    // );
+    // const requestTxReceipt = await requestTx.wait(1);
+    // const requestId = requestTxReceipt.events[2].args.id;
+    // const requestGasUsed = requestTxReceipt.gasUsed.toString();
 
     // Simulating the JavaScript code locally
     console.log("\nExecuting JavaScript request source code locally...");

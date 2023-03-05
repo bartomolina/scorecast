@@ -31,8 +31,8 @@ async function main() {
   const signer = new ethers.Wallet(signerPrivateKey, provider)
 
   // Consumer contract
-  const consumerAddress = '0x13B60B80E231a6bfB0608FD050Fc2e8d2276249f'
-  const consumerAbiPath = './artifacts/contracts/FunctionsConsumer.sol/FunctionsConsumer.json'
+  const consumerAddress = '0xEEca9d5fbbE245ACEC281cE669fAB3a3c07DBf0b'
+  const consumerAbiPath = './artifacts/contracts/ScoreCast.sol/ScoreCast.json'
   const contractAbi = JSON.parse(await fs.readFile(consumerAbiPath, 'utf8')).abi
   const consumerContract = new ethers.Contract(consumerAddress, contractAbi, signer)
 
@@ -51,20 +51,6 @@ async function main() {
   const source = await fs.readFile(`./scripts/simulate/scripts/${config.script}`, 'utf8')
   const args = config.args
 
-  // Tutorial 6
-  //const source = await fs.readFile('./examples/Functions-source-inline-secrets.js', 'utf8')
-  //const args = ["1", "bitcoin", "btc-bitcoin"]
-  //const secretsLocation = 0
-  //const secrets = { apiKey: process.env.COINMARKETCAP_API_KEY }
-
-  // Tutorial 7
-  //const source = await fs.readFile('./examples/Functions-source-inline-secrets.js', 'utf8')
-  //const args = ["1", "bitcoin", "btc-bitcoin"]
-  //const secretsLocation = 1
-  //const secrets = ['https://gist.github.com/dwightjl/0c8b62fc0bc33a6743d3085379ef0ac9/raw/']
-
-  // Create an oracle contract object.
-  // Used in this script only to encrypt secrets.
   const oracleAddress = '0xeA6721aC65BCeD841B8ec3fc5fEdeA6141a0aDE4' // Polygon Mumbai
   const oracleAbiPath = './artifacts/contracts/dev/functions/FunctionsOracle.sol/FunctionsOracle.json'
   const oracleAbi = JSON.parse(await fs.readFile(oracleAbiPath, 'utf8')).abi
@@ -94,12 +80,13 @@ async function main() {
   // Submit the request
   // Order of the parameters is critical
   const requestTx = await consumerContract.executeRequest(
-    source,
-    encryptedSecrets ?? '0x',
-    secretsLocation ?? 0, // 0 for inline, 1 for off-chain
-    args ?? [], // Chainlink Functions request args
-    subscriptionId, // Subscription ID
-    gasLimit, // Gas limit for the transaction
+    ["test"],
+    // source,
+    // encryptedSecrets ?? '0x',
+    // secretsLocation ?? 0, // 0 for inline, 1 for off-chain
+    // args ?? [], // Chainlink Functions request args
+    // subscriptionId, // Subscription ID
+    // gasLimit, // Gas limit for the transaction
     overrides = {
       //Gas limit for the Chainlink Functions request
       gasLimit: requestGas

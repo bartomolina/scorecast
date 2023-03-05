@@ -1,0 +1,3 @@
+npx hardhat run scripts/deploy-consumer.ts --network mumbai
+npx hardhat run scripts/authorize-consumer.ts --network mumbai
+npx hardhat run scripts/simulate/live/request.js
