@@ -1,64 +1,30 @@
 import { useMemo, useState } from "react";
-import { GetStaticProps } from "next";
 import Head from "next/head";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import useSWR from "swr";
+import axios from "axios";
+import FixturesTable from "../components/fixtures-table";
 
-type Props = {
-  aBCollections: Array<IABCollection>;
-};
+const fetcher = (url) => axios.get(url).then((res) => res.data);
 
-const Home = ({ aBCollections }: Props) => {
-  const [statusFilter, setStatusFilter] = useState("Completed");
-  const [scriptFilter, setScriptFilter] = useState("");
-  const [searchFilter, setSearchFilter] = useState("");
+const Home = () => {
+  const { data } = useSWR("/api/getFixtures", fetcher);
+  const [roundFilter, setRoundFilter] = useState("Regular Season - 24");
 
-  const filteredCollections = useMemo(() => {
-    let filteredCollections = [] as IABCollection[];
-    if (aBCollections) {
-      if (statusFilter === "Completed") {
-        filteredCollections = aBCollections.filter((collection) => collection.complete);
-      } else {
-        filteredCollections = aBCollections.filter((collection) => !collection.complete && collection.active);
-        if (statusFilter === "Upcoming") {
-          filteredCollections = filteredCollections.filter(
-            (collection) =>
-              collection.mintingDate * 1000 > Date.now() || (!collection.mintingDate && !collection.activatedAt)
-          );
-        } else if (statusFilter === "Open") {
-          filteredCollections = filteredCollections.filter(
-            (collection) =>
-              !collection.paused &&
-              (collection.mintingDate * 1000 < Date.now() || (!collection.mintingDate && collection.activatedAt))
-          );
-        } else if (statusFilter === "Paused") {
-          filteredCollections = filteredCollections.filter(
-            (collection) =>
-              collection.paused &&
-              ((collection.mintingDate && collection.mintingDate * 1000 < Date.now()) ||
-                (collection.activatedAt && collection.activatedAt * 1000 < Date.now()))
-          );
-        }
-      }
-
-      if (scriptFilter) {
-        filteredCollections = filteredCollections.filter((collection) => collection.scriptType === scriptFilter);
-      }
-
-      if (searchFilter) {
-        filteredCollections = filteredCollections.filter(
-          (collection) =>
-            collection.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-            collection.artistName.toLowerCase().includes(searchFilter.toLowerCase())
-        );
-      }
+  const fixtures = useMemo(() => {
+    let filteredFixtures = data || [];
+    if (roundFilter) {
+      return data.filter((f) => f.round === roundFilter);
     }
+    return filteredFixtures;
+  }, [data, roundFilter]);
 
-    return filteredCollections;
-  }, [aBCollections, statusFilter, scriptFilter, searchFilter]);
+  const rounds = useMemo(() => {
+    if (data) {
+      return new Set(data.map((f) => f.round));
+    }
+  }, [data]);
 
-  const scriptTypes = useMemo(() => {
-    return new Set(filteredCollections.map((c) => c.scriptType));
-  }, [filteredCollections]);
+  console.log(fixtures);
 
   return (
     <>
@@ -78,16 +44,17 @@ const Home = ({ aBCollections }: Props) => {
             id="status"
             name="status"
             className="rounded-md border border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-base"
-            onChange={(event) => setStatusFilter(event.target.value)}
-            value={statusFilter}
+            onChange={(event) => setRoundFilter(event.target.value)}
+            value={roundFilter}
           >
-            <option>Upcoming</option>
-            <option>Completed</option>
+            <option value="">round</option>
+            {rounds && [...Array.from(rounds)].map((round) => <option key={round}>{round}</option>)}
           </select>
         </div>
       </div>
       <div className="bg-gray-100 pb-14">
         <div className="mx-auto max-w-6xl sm:px-6 lg:px-8 py-6">
+          <FixturesTable fixtures={fixtures} />
         </div>
       </div>
     </>

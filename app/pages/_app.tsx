@@ -16,10 +16,10 @@ const App = ({ Component, pageProps }: AppProps) => (
     <WagmiConfig client={client}>
       <ConnectKitProvider theme="auto" mode="light" options={{ initialChainId: 5 }}>
         <NotificationsProvider>
-            <Layout>
-              <Component {...pageProps} />
-              <Notification />
-            </Layout>
+          <Layout>
+            <Component {...pageProps} />
+            <Notification />
+          </Layout>
         </NotificationsProvider>
       </ConnectKitProvider>
     </WagmiConfig>
