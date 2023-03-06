@@ -1,3 +1,11 @@
 npx hardhat run scripts/deploy-consumer.ts --network mumbai
 npx hardhat run scripts/authorize-consumer.ts --network mumbai
+
+// live
 npx hardhat run scripts/simulate/live/request.js
+
+// local
+npx hardhat run scripts/simulate/local/request.js
+
+// starter-kit
+npx hardhat functions-request --network mumbai --contract 0x8E7602586Cd42e64de2E914786F52237Ea5141f6 --subid 234

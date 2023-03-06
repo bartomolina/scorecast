@@ -11,7 +11,7 @@ const cacheFile = resolve("./data/cache");
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   let fixtures;
 
-  const refreshCacheSeconds = 7 * 24 * 60 * 60;
+  const refreshCacheSeconds = 3 * 60 * 60; // 12 hours
   let refreshCache = false;
 
   if (fs.existsSync(cacheFile)) {
@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  if (fixtures.length === 0 || refreshCache) {
+  if (refreshCache) {
     axios
       .get("https://v3.football.api-sports.io/fixtures?season=2022&league=140", {
         headers: {

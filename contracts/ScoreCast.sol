@@ -12,8 +12,8 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
   bytes public latestError;
 
   mapping (bytes32 => string) requestToFixture;
-  mapping (uint => mapping (uint => uint)) fixtureToTotalBets;
-  mapping (uint => mapping (address => mapping(uint => uint))) fixtureToBets;
+  mapping (string => mapping (string => uint)) fixtureToTotalBets;
+  mapping (string => mapping (address => mapping(string => uint))) fixtureToBets;
   mapping (string => bytes) fixtureToResults;
 
   string source = "return Functions.encodeUint256(123)";
@@ -79,7 +79,31 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     subscriptionId = _subscriptionId;
   }
 
-  function placeBet(uint fixtureId, uint bet) external payable {
+  function placeBet(string calldata fixtureId, string calldata bet) external payable {
     fixtureToBets[fixtureId][msg.sender][bet] = msg.value;
+    fixtureToTotalBets[fixtureId][bet] += msg.value;
+  }
+
+  function getResult(string calldata fixtureId) external view returns(bytes memory){
+    return fixtureToResults[fixtureId];
+  }
+
+  function getBets(string calldata fixtureId) external view returns(uint, uint){
+    return (fixtureToTotalBets[fixtureId]["1"], fixtureToTotalBets[fixtureId]["2"]);
+  }
+
+  // withdraw
+
+  // Test
+  function getRequest(bytes32 requestId) external view returns(string memory){
+    return requestToFixture[requestId];
+  }
+
+  function setResult(string calldata fixtureId, string calldata result) external {
+    fixtureToResults[fixtureId] = bytes(result);
+  }
+
+  function getSource() external view returns(string memory){
+    return source;
   }
 }

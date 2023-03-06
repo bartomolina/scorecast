@@ -1,9 +1,10 @@
 require("dotenv").config()
 
 const config = {
-  script: "minimal.js",
+  args: ["878176", process.env.RAPIDAPI_KEY],
+  // script: "minimal.js",
   
-  // script: "api-football.js",
+  script: "api-football.js",
   // args: ["541", "2022", "2023-02-18"],
   // secrets: { rapidapikey: process.env.RAPIDAPI_KEY },
   // walletPrivateKey: process.env.PRIVATE_KEY,

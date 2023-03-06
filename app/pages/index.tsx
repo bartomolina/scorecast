@@ -13,7 +13,7 @@ const Home = () => {
   const fixtures = useMemo(() => {
     let filteredFixtures = data || [];
     if (roundFilter) {
-      return data.filter((f) => f.round === roundFilter);
+      return filteredFixtures.filter((f) => f.round === roundFilter);
     }
     return filteredFixtures;
   }, [data, roundFilter]);

@@ -17,7 +17,7 @@ const FixturesTable = ({ fixtures }: Props) => {
         <Link
           href={`/matches/${fixture.id}`}
           key={fixture.id}
-          className="grid grid-cols-3 gap-4 bg-white rounded p-5 shadow hover:shadow-md hover:-translate-y-1 transform transition"
+          className="grid grid-cols-3 gap-4 bg-white rounded p-5 shadow hover:cursor-pointer hover:shadow-md hover:-translate-y-1 transform transition"
         >
           <div className="grid grid-cols-2 items-center">
             <Image className="pl-6" src={fixture.home.logo} alt={fixture.home.name} width={85} height={85} />

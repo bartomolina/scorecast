@@ -6,7 +6,8 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import ActiveLink from "./active-link";
 
 const navigation = [
-  { name: "Main", href: "/" },
+  { name: "All matches", href: "/" },
+  { name: "Active pools", href: "/active" },
   { name: "About", href: "/about" },
 ];
 
@@ -22,7 +23,7 @@ const Nav = () => {
               <div className="flex">
                 {/* Home */}
                 <div className="text-2xl mr-5 font-semibold lg:mr-11 md:inline-flex inline-flex sm:hidden justify-center items-center align-middle">
-                  
+                <Image src={"/logo.png"} alt="ScoreCast" width={150} height={42} quality={100} />
                 </div>
                 {/* Menu items */}
                 <div className="hidden sm:flex sm:space-x-11">
