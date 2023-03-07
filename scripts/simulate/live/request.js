@@ -31,7 +31,7 @@ async function main() {
   const signer = new ethers.Wallet(signerPrivateKey, provider)
 
   // Consumer contract
-  const consumerAddress = '0xEEca9d5fbbE245ACEC281cE669fAB3a3c07DBf0b'
+  const consumerAddress = '0x9f17403C27Df82f33332E8Bb3417020846c84b6b'
   const consumerAbiPath = './artifacts/contracts/ScoreCast.sol/ScoreCast.json'
   const contractAbi = JSON.parse(await fs.readFile(consumerAbiPath, 'utf8')).abi
   const consumerContract = new ethers.Contract(consumerAddress, contractAbi, signer)
@@ -56,10 +56,10 @@ async function main() {
   const oracleAbi = JSON.parse(await fs.readFile(oracleAbiPath, 'utf8')).abi
   const oracle = new ethers.Contract(oracleAddress, oracleAbi, signer)
 
-  if (typeof secrets !== 'undefined' && typeof secretsLocation !== 'undefined') {
+  if (typeof config.secrets !== 'undefined' && typeof config.secretsLocation !== 'undefined') {
     encryptedSecrets = await getEncryptedSecrets(
-      secrets,
-      secretsLocation,
+      config.secrets,
+      config.secretsLocation,
       oracle,
       signerPrivateKey
     )
@@ -71,6 +71,7 @@ async function main() {
 
   // Confirm request
   console.log('Request generated without errors')
+  console.log(encryptedSecrets);
   let proceed = prompt('Send request? (y/N) ')
   if (proceed != 'y' && proceed != 'Y') {
     console.log('Exiting without sending a request.')
@@ -80,11 +81,10 @@ async function main() {
   // Submit the request
   // Order of the parameters is critical
   const requestTx = await consumerContract.executeRequest(
-    ["test"],
     // source,
     // encryptedSecrets ?? '0x',
-    // secretsLocation ?? 0, // 0 for inline, 1 for off-chain
-    // args ?? [], // Chainlink Functions request args
+    // config.secretsLocation ?? 0, // 0 for inline, 1 for off-chain
+    args ?? [], // Chainlink Functions request args
     // subscriptionId, // Subscription ID
     // gasLimit, // Gas limit for the transaction
     overrides = {
@@ -153,8 +153,6 @@ async function main() {
 //   - A JSON object with { apiKey: 'your_secret_here' }
 //   - An array of secretsURLs
 async function getEncryptedSecrets(secrets, secretsLocation, oracle, signerPrivateKey = null) {
-
-
   // Fetch the DON public key from on-chain
   let DONPublicKey = await oracle.getDONPublicKey()
   // Remove the preceding 0x from the DON public key

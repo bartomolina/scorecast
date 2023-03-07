@@ -24,8 +24,6 @@ const Home = () => {
     }
   }, [data]);
 
-  console.log(fixtures);
-
   return (
     <>
       <Head>

@@ -8,7 +8,7 @@ const Notification = () => {
   const { notification, show, setShow } = useNotifications();
   const isError = notification.type === "error";
 
-  const url = notification.url || `https://goerli.etherscan.io/tx/${notification.txId}`
+  const url = notification.url || `https://mumbai.polygonscan.com/tx/${notification.txId}`
 
   return (
     <>

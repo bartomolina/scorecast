@@ -89,12 +89,12 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
   }
 
   function placeBet(string calldata fixtureId, string calldata bet) external payable {
-    fixtureToBets[fixtureId][msg.sender][bet] = msg.value;
-    fixtureToTotalBets[fixtureId][bet] += msg.value;
-
     if (fixtureToTotalBets[fixtureId]["1"] == 0 && fixtureToTotalBets[fixtureId]["2"] == 0) {
       activePools.push(fixtureId);
     }
+
+    fixtureToBets[fixtureId][msg.sender][bet] += msg.value;
+    fixtureToTotalBets[fixtureId][bet] += msg.value;
   }
 
   function getResult(string calldata fixtureId) external view returns(bytes memory){
