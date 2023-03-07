@@ -4,6 +4,14 @@ pragma solidity ^0.8.7;
 import "./dev/functions/FunctionsClient.sol";
 import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
 
+//  _                _                        _ _                   _   _
+// | |              | |                      | (_)                 | | | |
+// | |__   __ _ _ __| |_ ___  _ __ ___   ___ | |_ _ __   __ _   ___| |_| |__
+// | '_ \ / _` | '__| __/ _ \| '_ ` _ \ / _ \| | | '_ \ / _` | / _ \ __| '_ \
+// | |_) | (_| | |  | || (_) | | | | | | (_) | | | | | | (_| ||  __/ |_| | | |
+// |_.__/ \__,_|_|   \__\___/|_| |_| |_|\___/|_|_|_| |_|\__,_(_)___|\__|_| |_|
+//
+
 contract ScoreCast is FunctionsClient, ConfirmedOwner {
   using Functions for Functions.Request;
 
@@ -15,6 +23,7 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
   mapping (string => mapping (string => uint)) fixtureToTotalBets;
   mapping (string => mapping (address => mapping(string => uint))) fixtureToBets;
   mapping (string => bytes) fixtureToResults;
+  string[] activePools;
 
   string source = "return Functions.encodeUint256(123)";
   bytes secrets;
@@ -82,6 +91,10 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
   function placeBet(string calldata fixtureId, string calldata bet) external payable {
     fixtureToBets[fixtureId][msg.sender][bet] = msg.value;
     fixtureToTotalBets[fixtureId][bet] += msg.value;
+
+    if (fixtureToTotalBets[fixtureId]["1"] == 0 && fixtureToTotalBets[fixtureId]["2"] == 0) {
+      activePools.push(fixtureId);
+    }
   }
 
   function getResult(string calldata fixtureId) external view returns(bytes memory){
@@ -90,6 +103,10 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
 
   function getBets(string calldata fixtureId) external view returns(uint, uint){
     return (fixtureToTotalBets[fixtureId]["1"], fixtureToTotalBets[fixtureId]["2"]);
+  }
+
+  function getActivePools() external view returns (string[] memory) {
+        return activePools;
   }
 
   // withdraw

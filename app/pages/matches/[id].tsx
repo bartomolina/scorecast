@@ -1,25 +1,71 @@
-import { FormEvent, useMemo } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import useSWR from "swr";
 import axios from "axios";
+import { useAccount } from "wagmi";
+import { writeContract, waitForTransaction } from "@wagmi/core";
 import { MapPinIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { useNotifications } from "../../components/notifications-context";
 
 const fetcher = (url) => axios.get(url).then((res) => res.data);
 
 const Match = () => {
   const router = useRouter();
   const { data } = useSWR("/api/getFixtures", fetcher);
+  const { showNotification, showError } = useNotifications();
+  const { isConnected } = useAccount();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isWaitingTx, setIsWaitingTx] = useState(false);
 
   const fixture = useMemo(() => {
     console.log(data);
     return data ? data.find((f) => f.id === parseInt(router.query.id as string)) : null;
   }, [data, router.isReady]);
 
-  const handleBet = (event: FormEvent, bet: string) => {
-    event.preventDefault();
-    alert(bet);
+  const clearForm = () => {
+    // setMinter("");
+  };
+
+  const handleBet = (event: FormEvent, fixtureId: string, bet: string) => {
+    if (fixture) {
+      setIsLoading(true);
+      writeContract({
+        mode: "recklesslyUnprepared",
+        address: "0x40Da6DdA6280E9A866031120fFFf0A8b9eeCf7C5",
+        // @ts-ignore
+        abi: "",
+        functionName: "",
+        args: [],
+        overrides: {
+          value: 1,
+        },
+      })
+        // @ts-ignore
+        .then((hash, wait) => {
+          setIsWaitingTx(true);
+          return waitForTransaction(hash);
+        })
+        .then((tx) => {
+          setIsLoading(false);
+          setIsWaitingTx(false);
+          clearForm();
+          // @ts-ignore
+          console.log(tx);
+          showNotification(
+            "Minting completed",
+            tx.hash,
+            // @ts-ignore
+            `https://testnets.opensea.io/assets/goerli/${collection._address}/${parseInt(tx.logs[0].topics[3], 16)}`,
+            "View in OpenSea (you may get a 404, refresh after a few seconds)"
+          );
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          showError("Error minting", error.message);
+        });
+    }
   };
 
   return (
