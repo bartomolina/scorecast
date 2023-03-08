@@ -27,11 +27,11 @@ const FixturesTable = ({ fixtures }: Props) => {
             </div>
           </div>
           <div className="text-center justify-center text-gray-600">
-            <div className="items-center justify-center flex">
+            <div className="flex justify-center text-center items-center">
               <ClockIcon className="inline mr-1 h-4 w-4" />
               {new Date(fixture.date * 1000).toUTCString()}
             </div>
-            <div className="mt-1 items-center justify-center flex">
+            <div className="mt-1 flex justify-center text-center items-center">
               <MapPinIcon className="inline mr-1 h-4 w-4" />
               {fixture.venue}
             </div>
@@ -63,35 +63,6 @@ const FixturesTable = ({ fixtures }: Props) => {
         </Link>
       ))}
     </div>
-
-    // <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-    //   <table className="min-w-full divide-y divide-gray-300">
-    //     <thead className="bg-gray-50">
-    //       <tr>
-    //         <th scope="col" className="p-3 text-left text-sm font-semibold text-gray-900">
-    //           Home
-    //         </th>
-    //         <th scope="col" className="p-3 text-left text-sm font-semibold text-gray-900">
-    //           Away
-    //         </th>
-    //       </tr>
-    //     </thead>
-    //     <tbody className="divide-y divide-gray-200 bg-white">
-    //       {fixtures.map((fixture) => (
-    //         <tr key={fixture.id} className="h-16 hover:bg-gray-50">
-    //           <td className="pl-6">
-    //             <div className="font-semibold text-xl text-gray-800">
-    //               {fixture.home.name}
-    //             </div>
-    //           </td>
-    //           <td>
-    //             <div className="text-gray-500">{fixture.away.name}</div>
-    //           </td>
-    //         </tr>
-    //       ))}
-    //     </tbody>
-    //   </table>
-    // </div>
   );
 };
 

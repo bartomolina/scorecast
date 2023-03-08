@@ -10,6 +10,7 @@ import { writeContract, readContract, waitForTransaction } from "@wagmi/core";
 import { MapPinIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { useNotifications } from "../../components/notifications-context";
 import ConsumerContractJSON from "../../lib/contracts/consumer-contract.json";
+import TeamSection from "../../components/match-team-section";
 
 const fetcher = (url) => axios.get(url).then((res) => res.data);
 
@@ -19,8 +20,8 @@ const Match = () => {
   const [betData, setBetData] = useState({
     currentHome: "",
     currentAway: "",
-    home: 0,
-    away: 0,
+    home: null,
+    away: null,
   });
   const { showNotification, showError } = useNotifications();
   const { isConnected } = useAccount();
@@ -64,7 +65,6 @@ const Match = () => {
       args: [fixture.id.toString()],
     })
       .then((result: any) => {
-        console.log(result);
         setBetData({
           ...betData,
           currentHome: ethers.utils.formatEther(result[0]),
@@ -81,7 +81,6 @@ const Match = () => {
     const betAmount = bet === "1" ? betData.home : betData.away;
 
     if (fixture) {
-      console.log(bet);
       setIsLoading(true);
       writeContract({
         mode: "recklesslyUnprepared",
@@ -128,50 +127,25 @@ const Match = () => {
         {fixture && (
           <div className="mx-auto max-w-6xl sm:px-6 lg:px-8 py-6">
             <div className="grid grid-cols-3 gap-4 justify-items-center text-center items-center bg-white rounded p-14 shadow">
+              <TeamSection
+                {...{
+                  team: fixture.home,
+                  state: betData.home,
+                  currentPool: betData.currentHome,
+                  side: "home",
+                  isConnected,
+                  isLoading,
+                  isWaitingTx,
+                  handleFormChange,
+                  handleBet,
+                }}
+              />
               <div>
-                <div className="flex justify-center">
-                  <Image src={fixture.home.logo} alt={fixture.home.name} width={160} height={160} />
-                </div>
-                <div className="mt-10 text-gray-900">
-                  <div>Current Bets: {betData.currentHome} MATIC</div>
-                  {!isConnected ? (
-                    <div>Connect wallet to place a bet</div>
-                  ) : (
-                    <form action="#" method="POST">
-                      <label htmlFor="home" className="sr-only">
-                        Bet home team
-                      </label>
-                      <input
-                        type="number"
-                        id="home"
-                        step="0.001"
-                        min="0"
-                        value={betData.home}
-                        onChange={handleFormChange}
-                        className="h-14 w-28 font-medium rounded-lg text-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="MATIC"
-                        required
-                      ></input>
-                      <button
-                        type="button"
-                        disabled={!isConnected || isLoading}
-                        onClick={(e) => handleBet(e, "1")}
-                        className={
-                          "ml-2 h-14 px-5 font-medium rounded-lg text-lg text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300"
-                        }
-                      >
-                        Bet
-                      </button>
-                    </form>
-                  )}
-                </div>
-              </div>
-              <div>
-                <div className="text-gray-900 text-lg">
+                <div className="text-lg text-gray-900 flex justify-center text-center items-center">
                   <ClockIcon className="inline mr-1 h-4 w-4" />
                   {new Date(fixture.date * 1000).toUTCString()}
                 </div>
-                <div className="text-gray-500">
+                <div className="text-gray-500  flex justify-center text-center items-center">
                   <MapPinIcon className="inline mr-1 h-4 w-4" />
                   {fixture.venue}
                 </div>
@@ -187,44 +161,19 @@ const Match = () => {
                   {fixture.status}
                 </div>
               </div>
-              <div>
-                <div className="flex justify-center">
-                  <Image src={fixture.away.logo} alt={fixture.away.name} width={160} height={160} />
-                </div>
-                <div className="mt-10 text-gray-900">
-                  <div>Current Bets: {betData.currentAway} MATIC</div>
-                  {!isConnected ? (
-                    <div>Connect wallet to place a bet</div>
-                  ) : (
-                    <form action="#" method="POST">
-                      <label htmlFor="away" className="sr-only">
-                        Bet away team
-                      </label>
-                      <input
-                        type="number"
-                        id="away"
-                        step="0.001"
-                        min="0"
-                        value={betData.away}
-                        onChange={handleFormChange}
-                        className="h-14 w-28 font-medium rounded-lg text-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="MATIC"
-                        required
-                      ></input>
-                      <button
-                        type="button"
-                        disabled={!isConnected || isLoading}
-                        onClick={(e) => handleBet(e, "2")}
-                        className={
-                          "ml-2 h-14 px-5 font-medium rounded-lg text-lg text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300"
-                        }
-                      >
-                        Bet
-                      </button>
-                    </form>
-                  )}
-                </div>
-              </div>
+              <TeamSection
+                {...{
+                  team: fixture.away,
+                  state: betData.away,
+                  currentPool: betData.currentAway,
+                  side: "away",
+                  isConnected,
+                  isLoading,
+                  isWaitingTx,
+                  handleFormChange,
+                  handleBet,
+                }}
+              />
             </div>
           </div>
         )}
