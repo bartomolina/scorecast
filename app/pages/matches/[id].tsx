@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import useSWR from "swr";
 import axios from "axios";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { writeContract, readContract, waitForTransaction } from "@wagmi/core";
 import { MapPinIcon, ClockIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
@@ -145,6 +145,41 @@ const Match = () => {
     }
   };
 
+  const handleVerifyResult = (event: FormEvent) => {
+    console.log([fixture.id.toString(), process.env.NEXT_PUBLIC_RAPIDAPI_KEY]);
+    console.log(ConsumerContractJSON.address);
+    if (fixture) {
+      setIsLoading(true);
+      writeContract({
+        mode: "recklesslyUnprepared",
+        address: ConsumerContractJSON.address,
+        // @ts-ignore
+        abi: ConsumerContractJSON.abi,
+        functionName: "executeRequest",
+        args: [[fixture.id.toString(), process.env.NEXT_PUBLIC_RAPIDAPI_KEY]],
+        overrides: {
+          gasLimit: BigNumber.from(5500000),
+        },
+      })
+        // @ts-ignore
+        .then((hash, wait) => {
+          setIsWaitingTx(true);
+          return waitForTransaction(hash);
+        })
+        .then((tx) => {
+          setIsLoading(false);
+          setIsWaitingTx(false);
+          clearForm();
+          // @ts-ignore
+          showNotification("Verifying result. This may take a few seconds, come back later", tx.transactionHash);
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          showError("Error verifying result", error.message);
+        });
+    }
+  };
+
   return (
     <>
       <Head>
@@ -218,13 +253,28 @@ const Match = () => {
                     You can't place any bets if the match is in progress
                   </div>
                 )}
-                {isConnected && (fixture.status === "Match Finished") && betData.result == 0 && payout.totalBets != 0 &&  (
-                  <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
-                    <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
-                    Match finished. Verify results on-chain to claim your stake
-                  </div>
-                )}
-                {isConnected && (fixture.status === "Match Finished") && betData.result !=0 && payout.totalBets != 0 &&  (
+                {isConnected &&
+                  fixture.status === "Match Finished" &&
+                  betData.result === 0 &&
+                  payout.totalBets != 0 && (
+                    <>
+                      <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                        <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
+                        Match finished. Verify results onchain to claim your stake
+                      </div>
+                      <button
+                        type="button"
+                        disabled={!isConnected || isLoading}
+                        onClick={handleVerifyResult}
+                        className={
+                          "mt-4 h-10 px-5 font-medium rounded-lg text-sm text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300"
+                        }
+                      >
+                        Verity result on-chain
+                      </button>
+                    </>
+                  )}
+                {isConnected && fixture.status === "Match Finished" && betData.result != 0 && payout.totalBets != 0 && (
                   <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
                     <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
                     Match finished. You can claim your stake
