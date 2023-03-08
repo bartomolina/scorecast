@@ -31,6 +31,8 @@ if ("Error" === data.Response) {
 
 const response = data.response[0];
 
+console.log(response);
+
 let result = 0;
 if (response.fixture.status.short === "FT") {
   if (response.teams.home.winner) {

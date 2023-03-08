@@ -1,9 +1,9 @@
 require("dotenv").config()
 
 const config = {
-  args: ["878176"],
-  secrets: { key: "test" },
-  secretsLocation: 0,
+  args: ["878176",""],
+  // secrets: { key: "test" },
+  // secretsLocation: 0,
 
   // script: "minimal.js",
   

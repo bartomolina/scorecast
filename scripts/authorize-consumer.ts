@@ -2,7 +2,7 @@ const hre = require("hardhat");
 const { networkConfig } = require("../config.ts");
 
 const SUBSCRIPTION_ID = "234";
-const CONSUMER_CONTRACT = "0x7f34cd591E55823cf4eA86D778a0b7e87597ae32";
+const CONSUMER_CONTRACT = "0xae896c9b2B1dD40804C9498B1584870d6E698E2a";
 
 async function main() {
   const functionsBillingRegistryProxy = networkConfig[hre.network.name]["functionsBillingRegistryProxy"];

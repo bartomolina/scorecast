@@ -3,7 +3,10 @@ import Image from "next/image";
 const TeamSection = ({
   team,
   state,
+  payout,
+  totalBets,
   currentPool,
+  status,
   side,
   isConnected,
   isLoading,
@@ -16,15 +19,21 @@ const TeamSection = ({
       <div className="flex justify-center">
         <Image src={team.logo} alt={team.name} width={160} height={160} quality={100} />
       </div>
-      <div className="mt-6 space-y-7 text-gray-900">
-        <div className="text-2xl flex justify-center text-center items-center">
-          <Image src="/matic.png" alt="MATIC" width={30} height={30} />
-          <div className="ml-2">{currentPool}</div>
-        </div>
-        {!isConnected ? (
-          <div>Connect wallet to place a bet</div>
-        ) : (
-          <form action="#" method="POST">
+      <div className="mt-5 text-gray-900">
+        {isConnected && totalBets > 0 && (
+          <>
+            <div className="text-3xl flex justify-center text-center items-center">
+              <Image src="/matic.png" alt="MATIC" width={30} height={30} />
+              <div className="ml-2">{currentPool}</div>
+            </div>
+            <div className="mt-1 text-xl flex justify-center text-center items-center">
+              <span className="text-gray-500">payout</span>
+              <span className="ml-2">{payout}x</span>
+            </div>
+          </>
+        )}
+        {isConnected && status != "Match Finished" && (
+          <form action="#" method="POST" className="mt-5">
             <label htmlFor={side} className="sr-only">
               {`Bet ${side} team`}
             </label>
@@ -33,7 +42,7 @@ const TeamSection = ({
               id={side}
               step="0.001"
               min="0"
-              value={state}
+              value={state ? state : ""}
               onChange={handleFormChange}
               className="h-10 w-28 font-medium rounded-lg text-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
               placeholder="MATIC"

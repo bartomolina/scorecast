@@ -31,7 +31,7 @@ async function main() {
   const signer = new ethers.Wallet(signerPrivateKey, provider)
 
   // Consumer contract
-  const consumerAddress = '0x9f17403C27Df82f33332E8Bb3417020846c84b6b'
+  const consumerAddress = '0xae896c9b2B1dD40804C9498B1584870d6E698E2a'
   const consumerAbiPath = './artifacts/contracts/ScoreCast.sol/ScoreCast.json'
   const contractAbi = JSON.parse(await fs.readFile(consumerAbiPath, 'utf8')).abi
   const consumerContract = new ethers.Contract(consumerAddress, contractAbi, signer)

@@ -7,7 +7,7 @@ import axios from "axios";
 import { ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { writeContract, readContract, waitForTransaction } from "@wagmi/core";
-import { MapPinIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { MapPinIcon, ClockIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useNotifications } from "../../components/notifications-context";
 import ConsumerContractJSON from "../../lib/contracts/consumer-contract.json";
 import TeamSection from "../../components/match-team-section";
@@ -18,10 +18,16 @@ const Match = () => {
   const router = useRouter();
   const { data } = useSWR("/api/getFixtures", fetcher);
   const [betData, setBetData] = useState({
-    currentHome: "",
-    currentAway: "",
-    home: null,
-    away: null,
+    currentHome: "0",
+    currentAway: "0",
+    home: 0,
+    away: 0,
+    result: 0 as Number,
+  });
+  const [payout, setPayout] = useState({
+    home: 0,
+    away: 0,
+    totalBets: 0,
   });
   const { showNotification, showError } = useNotifications();
   const { isConnected } = useAccount();
@@ -38,17 +44,32 @@ const Match = () => {
     }
   }, [fixture]);
 
+  useEffect(() => {
+    calculatePayout();
+  }, [betData]);
+
   const handleFormChange = (event: FormEvent<HTMLInputElement>) => {
     setBetData({
       ...betData,
-      [event.currentTarget.id]: event.currentTarget.value,
+      [event.currentTarget.id]: parseFloat(event.currentTarget.value),
+    });
+  };
+
+  const calculatePayout = () => {
+    const homeBets = parseFloat(betData.currentHome) + betData.home;
+    const awayBets = parseFloat(betData.currentAway) + betData.away;
+    const totalBets = homeBets + awayBets;
+
+    setPayout({
+      home: homeBets ? parseFloat((totalBets / homeBets).toFixed(3)) : 0,
+      away: awayBets ? parseFloat((totalBets / awayBets).toFixed(3)) : 0,
+      totalBets: totalBets,
     });
   };
 
   const clearForm = () => {
     setBetData({
-      currentHome: "",
-      currentAway: "",
+      ...betData,
       home: 0,
       away: 0,
     });
@@ -60,15 +81,27 @@ const Match = () => {
       address: ConsumerContractJSON.address,
       // @ts-ignore
       abi: ConsumerContractJSON.abi,
-      functionName: "getBets",
+      functionName: "getResult",
       // @ts-ignore
       args: [fixture.id.toString()],
     })
-      .then((result: any) => {
-        setBetData({
-          ...betData,
-          currentHome: ethers.utils.formatEther(result[0]),
-          currentAway: ethers.utils.formatEther(result[1]),
+      .then((result) => {
+        const verifiedResult = !isNaN(parseInt(result, 16)) ? parseInt(result, 16) : 0;
+        readContract({
+          // @ts-ignore
+          address: ConsumerContractJSON.address,
+          // @ts-ignore
+          abi: ConsumerContractJSON.abi,
+          functionName: "getBets",
+          // @ts-ignore
+          args: [fixture.id.toString()],
+        }).then((result: any) => {
+          setBetData({
+            ...betData,
+            currentHome: ethers.utils.formatEther(result[0]),
+            currentAway: ethers.utils.formatEther(result[1]),
+            result: verifiedResult,
+          });
         });
       })
       .catch((error) => {
@@ -120,7 +153,11 @@ const Match = () => {
       </Head>
       <header className="mx-auto max-w-6xl px-6 lg:px-8 pt-4 pb-8">
         <h1 className="text-5xl font-thin leading-tight tracking-tight text-gray-900">
-          {fixture?.home.name} - {fixture?.away.name}
+          {fixture && (
+            <>
+              {fixture.home.name} - {fixture?.away.name}
+            </>
+          )}
         </h1>
       </header>
       <div className="bg-gray-100 pb-14">
@@ -131,7 +168,10 @@ const Match = () => {
                 {...{
                   team: fixture.home,
                   state: betData.home,
+                  payout: payout.home,
+                  totalBets: payout.totalBets,
                   currentPool: betData.currentHome,
+                  status: fixture.status,
                   side: "home",
                   isConnected,
                   isLoading,
@@ -150,7 +190,7 @@ const Match = () => {
                   {fixture.venue}
                 </div>
                 <div
-                  className={`text-lg inline-block mt-6 px-2 rounded text-white ${
+                  className={`text-lg inline-block mt-4 px-2 rounded text-white ${
                     fixture.status === "Match Finished"
                       ? "bg-green-500"
                       : fixture.status === "First Half"
@@ -160,12 +200,45 @@ const Match = () => {
                 >
                   {fixture.status}
                 </div>
+                {!isConnected && (
+                  <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                    <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
+                    Connect your wallet to start betting
+                  </div>
+                )}
+                {isConnected && fixture.status === "Not Started" && payout.totalBets === 0 && (
+                  <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                    <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
+                    No bets yet. Place a bet to start a pool
+                  </div>
+                )}
+                {isConnected && fixture.status != "Not Started" && fixture.status != "Match Finished" && (
+                  <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                    <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
+                    You can't place any bets if the match is in progress
+                  </div>
+                )}
+                {isConnected && (fixture.status === "Match Finished") && betData.result == 0 && payout.totalBets != 0 &&  (
+                  <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                    <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
+                    Match finished. Verify results on-chain to claim your stake
+                  </div>
+                )}
+                {isConnected && (fixture.status === "Match Finished") && betData.result !=0 && payout.totalBets != 0 &&  (
+                  <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                    <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
+                    Match finished. You can claim your stake
+                  </div>
+                )}
               </div>
               <TeamSection
                 {...{
                   team: fixture.away,
                   state: betData.away,
+                  payout: payout.away,
+                  totalBets: payout.totalBets,
                   currentPool: betData.currentAway,
+                  status: fixture.status,
                   side: "away",
                   isConnected,
                   isLoading,
