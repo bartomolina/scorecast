@@ -113,11 +113,38 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
 
   function withdraw(string calldata fixtureId) external {
     // TODO: check endtime < current
-    (bool success, ) = msg.sender.call{value: 1}("");
+    uint calculatedAmount = claimableAmount(fixtureId);
+
+    if (calculatedAmount > 0) {
+      (bool success, ) = payable(msg.sender).call{value: calculatedAmount}("");
+      require(success);
+    }
   }
 
-  function getBets(string calldata fixtureId) external view returns(uint, uint){
+  function getBets(string calldata fixtureId) public view returns(uint, uint){
     return (fixtureToTotalBets[fixtureId]["1"], fixtureToTotalBets[fixtureId]["2"]);
+  }
+
+  function getOwnBets(string calldata fixtureId) external view returns(uint, uint){
+    return (fixtureToBets[fixtureId][msg.sender]["1"], fixtureToBets[fixtureId][msg.sender]["1"]);
+  }
+
+  function claimableAmount(string calldata fixtureId) public view returns(uint){
+    // TODO: check endtime < current
+    (uint totalHome, uint totalAway) = getBets(fixtureId);
+    string memory result = string(fixtureToResults[fixtureId]);
+    uint ownAmount = fixtureToBets[fixtureId][msg.sender][string(result)];
+    uint calculatedAmount;
+
+    if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked("1")) && totalAway > 0) {
+      calculatedAmount = ownAmount * (totalHome + totalAway) / totalHome;
+    }
+    
+    if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked("2")) && totalHome > 0) {
+      calculatedAmount = ownAmount * (totalHome + totalAway) / totalAway;
+    }
+
+    return calculatedAmount;
   }
 
   function getActivePools() external view returns (string[] memory) {
