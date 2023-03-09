@@ -15,13 +15,20 @@ import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
 contract ScoreCast is FunctionsClient, ConfirmedOwner {
   using Functions for Functions.Request;
 
+  struct FixtureInfo {
+    uint256 startTime;
+    uint256 endTime;
+  }
+
   bytes32 public latestRequestId;
   bytes public latestResponse;
   bytes public latestError;
 
   mapping (bytes32 => string) requestToFixture;
-  mapping (string => mapping (string => uint)) fixtureToTotalBets;
+
+  mapping (string => FixtureInfo) fixtureToFixtureInfo;
   mapping (string => mapping (address => mapping(string => uint))) fixtureToBets;
+  mapping (string => mapping (string => uint)) fixtureToTotalBets;
   mapping (string => bytes) fixtureToResults;
   string[] activePools;
 
@@ -88,9 +95,12 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     subscriptionId = _subscriptionId;
   }
 
-  function placeBet(string calldata fixtureId, string calldata bet) external payable {
+  function placeBet(string calldata fixtureId, string calldata bet, uint256 startTime, uint256 endTime) external payable {
+    // TODO: require starttime < current
     if (fixtureToTotalBets[fixtureId]["1"] == 0 && fixtureToTotalBets[fixtureId]["2"] == 0) {
       activePools.push(fixtureId);
+      FixtureInfo memory fixtureInfo = FixtureInfo(startTime, endTime);
+      fixtureToFixtureInfo[fixtureId] = fixtureInfo;
     }
 
     fixtureToBets[fixtureId][msg.sender][bet] += msg.value;
@@ -101,17 +111,24 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     return fixtureToResults[fixtureId];
   }
 
+  function withdraw(string calldata fixtureId) external {
+    // TODO: check endtime < current
+    (bool success, ) = msg.sender.call{value: 1}("");
+  }
+
   function getBets(string calldata fixtureId) external view returns(uint, uint){
     return (fixtureToTotalBets[fixtureId]["1"], fixtureToTotalBets[fixtureId]["2"]);
   }
 
   function getActivePools() external view returns (string[] memory) {
-        return activePools;
+    return activePools;
   }
 
-  // withdraw
-
   // Test
+  function getFixtureInfo(string calldata fixtureId) external view returns(FixtureInfo memory) {
+    return fixtureToFixtureInfo[fixtureId];
+  }
+
   function getRequest(bytes32 requestId) external view returns(string memory){
     return requestToFixture[requestId];
   }
