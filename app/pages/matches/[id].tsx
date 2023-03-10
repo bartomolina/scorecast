@@ -51,8 +51,8 @@ const Match = () => {
   }, [address]);
 
   const isPoolOpen = useMemo(() => {
-    return !(onChainInfo.totalBets.home && onChainInfo.totalBets.away);
-  }, [betData]);
+    return (onChainInfo.totalBets.home > 0 || onChainInfo.totalBets.away > 0);
+  }, [onChainInfo]);
 
   const fixture = useMemo(() => {
     return data ? data.find((f) => f.id === parseInt(router.query.id as string)) : null;
@@ -63,7 +63,6 @@ const Match = () => {
       getMatchData();
     }
   }, [fixture, address]);
-  console.log(onChainInfo);
 
   useEffect(() => {
     calculatePayout();
@@ -115,12 +114,12 @@ const Match = () => {
             endTime: result.fixtureInfo.endTime.toNumber(),
           },
           totalBets: {
-            home: ethers.utils.formatEther(result.totalHome),
-            away: ethers.utils.formatEther(result.totalAway),
+            home: parseFloat(ethers.utils.formatEther(result.totalHome)),
+            away: parseFloat(ethers.utils.formatEther(result.totalAway)),
           },
           ownBets: {
-            home: ethers.utils.formatEther(result.ownHome),
-            away: ethers.utils.formatEther(result.ownAway),
+            home: parseFloat(ethers.utils.formatEther(result.ownHome)),
+            away: parseFloat(ethers.utils.formatEther(result.ownAway)),
           },
           result: !isNaN(parseInt(result.result, 16)) ? parseInt(result.result, 16) : 0,
         });
@@ -132,6 +131,7 @@ const Match = () => {
   };
 
   const handleBet = (event: FormEvent, bet: string) => {
+    event.preventDefault();
     const betAmount = bet === "1" ? betData.home : betData.away;
 
     if (fixture) {
@@ -168,7 +168,13 @@ const Match = () => {
     }
   };
 
+  const handleWithdrawal = (event: FormEvent) => {
+    event.preventDefault();
+    alert("test");
+  }
+
   const handleVerifyResult = (event: FormEvent) => {
+    event.preventDefault();
     if (fixture) {
       setIsLoading(true);
       writeContract({
@@ -230,15 +236,18 @@ const Match = () => {
                   payout: payout.home,
                   totalBets: payout.totalBets,
                   currentPool: onChainInfo.totalBets.home,
+                  otherPool: onChainInfo.totalBets.away,
                   currentUser: onChainInfo.ownBets.home,
                   isPoolOpen,
                   status: fixture.status,
+                  result: onChainInfo.result,
                   side: "home",
                   isConnected,
                   isLoading,
                   isWaitingTx,
                   handleFormChange,
                   handleBet,
+                  handleWithdrawal,
                 }}
               />
               <div>
@@ -354,15 +363,18 @@ const Match = () => {
                   payout: payout.away,
                   totalBets: payout.totalBets,
                   currentPool: onChainInfo.totalBets.away,
+                  otherPool: onChainInfo.totalBets.home,
                   currentUser: onChainInfo.ownBets.away,
                   isPoolOpen,
                   status: fixture.status,
+                  result: onChainInfo.result,
                   side: "away",
                   isConnected,
                   isLoading,
                   isWaitingTx,
                   handleFormChange,
                   handleBet,
+                  handleWithdrawal,
                 }}
               />
             </div>

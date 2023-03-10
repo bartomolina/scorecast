@@ -42,7 +42,7 @@ describe("ScoreCast", function () {
       expect(currentBets[1]).to.eq(hre.ethers.utils.parseEther("1"));
     });
   });
-  describe("Verify fixture and bets creation", function () {
+  describe("Withdrawals", function () {
     it("Should allow withdrawals", async function () {
       const { scoreCast, user1, user2, fixture1, fixture2 } = await loadFixture(deployAndAddBetsScoreCastFixture);
 
@@ -58,7 +58,6 @@ describe("ScoreCast", function () {
       console.log("Balance before: ", hre.ethers.utils.formatEther(before));
       const withdrawTx = await scoreCast.connect(user1).withdraw(fixture1.fixtureId);
       withdrawTx.wait();
-      console.log("test....");
       const after = await hre.ethers.provider.getBalance(user1.address);
       console.log("Balance after: ", hre.ethers.utils.formatEther(after));
 

@@ -28,6 +28,7 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
 
   mapping (string => FixtureInfo) fixtureToFixtureInfo;
   mapping (string => mapping (address => mapping(string => uint))) fixtureToBets;
+  mapping (string => mapping (address => mapping(string => uint))) fixtureToClaims;
   mapping (string => mapping (string => uint)) fixtureToTotalBets;
   mapping (string => bytes) fixtureToResults;
   string[] activePools;
@@ -111,16 +112,6 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     return fixtureToResults[fixtureId];
   }
 
-  function withdraw(string calldata fixtureId) external {
-    // TODO: check endtime < current
-    uint calculatedAmount = claimableAmount(fixtureId);
-
-    if (calculatedAmount > 0) {
-      (bool success, ) = payable(msg.sender).call{value: calculatedAmount}("");
-      require(success);
-    }
-  }
-
   function getBets(string calldata fixtureId) public view returns(uint, uint){
     return (fixtureToTotalBets[fixtureId]["1"], fixtureToTotalBets[fixtureId]["2"]);
   }
@@ -136,7 +127,17 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     result = getResult(fixtureId);
   }
 
-  function claimableAmount(string calldata fixtureId) public view returns(uint){
+  function withdraw(string calldata fixtureId) external {
+    // TODO: check endtime < current
+    uint calculatedAmount = claimableAmount(fixtureId);
+
+    if (calculatedAmount > 0) {
+      (bool success, ) = payable(msg.sender).call{value: calculatedAmount}("");
+      require(success);
+    }
+  }
+
+  function claimableAmount(string calldata fixtureId) public returns(uint){
     // TODO: check endtime < current
     (uint totalHome, uint totalAway) = getBets(fixtureId);
     string memory result = string(fixtureToResults[fixtureId]);
@@ -150,6 +151,9 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked("2")) && totalHome > 0) {
       calculatedAmount = ownAmount * (totalHome + totalAway) / totalAway;
     }
+
+    require(fixtureToClaims[fixtureId][msg.sender][string(result)] == 0, "Already claimed");
+    fixtureToClaims[fixtureId][msg.sender][string(result)] = calculatedAmount;
 
     return calculatedAmount;
   }
