@@ -51,7 +51,7 @@ const Match = () => {
   }, [address]);
 
   const isPoolOpen = useMemo(() => {
-    return (onChainInfo.totalBets.home > 0 || onChainInfo.totalBets.away > 0);
+    return onChainInfo.totalBets.home > 0 || onChainInfo.totalBets.away > 0;
   }, [onChainInfo]);
 
   const fixture = useMemo(() => {
@@ -66,7 +66,7 @@ const Match = () => {
 
   useEffect(() => {
     calculatePayout();
-  }, [betData]);
+  }, [betData, onChainInfo]);
 
   const handleFormChange = (event: FormEvent<HTMLInputElement>) => {
     let value = parseFloat(event.currentTarget.value);
@@ -130,9 +130,9 @@ const Match = () => {
       });
   };
 
-  const handleBet = (event: FormEvent, bet: string) => {
+  const handleBet = (event: FormEvent, bet: Number) => {
     event.preventDefault();
-    const betAmount = bet === "1" ? betData.home : betData.away;
+    const betAmount = bet === 1 ? betData.home : betData.away;
 
     if (fixture) {
       setIsLoading(true);
@@ -170,8 +170,34 @@ const Match = () => {
 
   const handleWithdrawal = (event: FormEvent) => {
     event.preventDefault();
-    alert("test");
-  }
+    if (fixture) {
+      setIsLoading(true);
+      writeContract({
+        mode: "recklesslyUnprepared",
+        address: ConsumerContractJSON.address,
+        // @ts-ignore
+        abi: ConsumerContractJSON.abi,
+        functionName: "withdraw",
+        args: [fixture.id.toString()],
+      })
+        // @ts-ignore
+        .then((hash, wait) => {
+          setIsWaitingTx(true);
+          return waitForTransaction(hash);
+        })
+        .then((tx) => {
+          setIsLoading(false);
+          setIsWaitingTx(false);
+          // @ts-ignore
+          showNotification("Claim completed", tx.transactionHash);
+          getMatchData();
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          showError("Error claiming funds", error.message);
+        });
+    }
+  };
 
   const handleVerifyResult = (event: FormEvent) => {
     event.preventDefault();
@@ -211,11 +237,11 @@ const Match = () => {
   return (
     <>
       <Head>
-        <title>{fixture ? `${fixture.home.name} vs. ${fixture.away.name}` : ""} - ScoreCast.io</title>
+        <title>{fixture ? `${fixture.home.name} vs. ${fixture.away.name} - ScoreCast.io` : ""}</title>
         <meta name="description" content="ScoreCast" />
       </Head>
-      <header className="mx-auto max-w-6xl px-6 lg:px-8 pt-4 pb-8">
-        <h1 className="text-5xl font-thin leading-tight tracking-tight text-gray-900">
+      <header className="mx-auto max-w-6xl px-6 lg:px-8 py-14 text-center">
+        <h1 className="text-5xl font-semibold leading-tight tracking-tight text-gray-900">
           {fixture && (
             <>
               {fixture.home.name} - {fixture?.away.name}
@@ -223,160 +249,162 @@ const Match = () => {
           )}
         </h1>
       </header>
-      <div className="bg-gray-100 pb-14">
+      <div className="pb-14">
         {fixture && (
-          <div className="mx-auto max-w-6xl sm:px-6 lg:px-8 py-6">
-            <div className="grid grid-cols-3 gap-4 justify-items-center text-center items-center bg-white rounded p-14 shadow">
-              <TeamSection
-                {...{
-                  team: fixture.home,
-                  address: userAddress,
-                  state: betData.home,
-                  otherState: betData.away,
-                  payout: payout.home,
-                  totalBets: payout.totalBets,
-                  currentPool: onChainInfo.totalBets.home,
-                  otherPool: onChainInfo.totalBets.away,
-                  currentUser: onChainInfo.ownBets.home,
-                  isPoolOpen,
-                  status: fixture.status,
-                  result: onChainInfo.result,
-                  side: "home",
-                  isConnected,
-                  isLoading,
-                  isWaitingTx,
-                  handleFormChange,
-                  handleBet,
-                  handleWithdrawal,
-                }}
-              />
-              <div>
-                <div className="text-lg text-gray-900 flex justify-center text-center items-center">
-                  <ClockIcon className="inline mr-1 h-4 w-4" />
-                  {new Date(fixture.date * 1000).toUTCString()}
-                </div>
-                <div className="text-gray-500  flex justify-center text-center items-center">
-                  <MapPinIcon className="inline mr-1 h-4 w-4" />
-                  {fixture.venue}
-                </div>
-                <div
-                  className={`text-lg inline-block mt-4 px-2 rounded text-white ${
-                    fixture.status === "Match Finished"
-                      ? "bg-green-500"
-                      : fixture.status === "First Half"
-                      ? "bg-orange-500"
-                      : "bg-red-500"
-                  }`}
-                >
-                  {fixture.status}
-                </div>
-                {!isConnected && (
-                  <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
-                    <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
-                    Connect your wallet to start betting
+          <div className="mx-auto max-w-6xl sm:px-6 lg:px-8 py-7">
+            <div className="flex p-3 items-center rounded-lg bg-gradient-to-br from-green-400 to-blue-600 shadow-md">
+              <div className="grid grid-cols-3 gap-4 justify-items-center text-center items-center bg-white py-20 rounded-md h-full w-full">
+                <TeamSection
+                  {...{
+                    team: fixture.home,
+                    address: userAddress,
+                    state: betData.home,
+                    otherState: betData.away,
+                    payout: payout.home,
+                    totalBets: payout.totalBets,
+                    currentPool: onChainInfo.totalBets.home,
+                    otherPool: onChainInfo.totalBets.away,
+                    currentUser: onChainInfo.ownBets.home,
+                    isPoolOpen,
+                    status: fixture.status,
+                    result: onChainInfo.result,
+                    side: "home",
+                    isConnected,
+                    isLoading,
+                    isWaitingTx,
+                    handleFormChange,
+                    handleBet,
+                    handleWithdrawal,
+                  }}
+                />
+                <div>
+                  <div className="text-lg text-gray-900 flex justify-center text-center items-center">
+                    <ClockIcon className="inline mr-1 h-4 w-4" />
+                    {new Date(fixture.date * 1000).toUTCString()}
                   </div>
-                )}
-                {isConnected && fixture.status === "Not Started" && !isPoolOpen && (
-                  <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
-                    <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
-                    No bets yet. Place a bet to start a pool
+                  <div className="text-gray-500  flex justify-center text-center items-center">
+                    <MapPinIcon className="inline mr-1 h-4 w-4" />
+                    {fixture.venue}
                   </div>
-                )}
-                {isConnected && fixture.status != "Not Started" && fixture.status != "Match Finished" && (
-                  <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
-                    <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
-                    You can't place any bets if the match is in progress
+                  <div
+                    className={`text-lg inline-block mt-4 px-2 rounded text-white ${
+                      fixture.status === "Match Finished"
+                        ? "bg-green-500"
+                        : fixture.status === "First Half"
+                        ? "bg-orange-500"
+                        : "bg-red-500"
+                    }`}
+                  >
+                    {fixture.status}
                   </div>
-                )}
-                {(true ||
-                  (isConnected && fixture.status === "Match Finished" && onChainInfo.result === 0 && isPoolOpen)) && (
-                  <div className="divide-y divide-blue-600 w-full border text-blue-900 mt-7 py-4 rounded border-blue-600 bg-blue-50">
-                    <div className="flex justify-center text-center items-center">
-                      <Image src="/functions.png" className="mr-3" alt="Chainlink functions" width={20} height={20} />
-                      Verified on-chain data
+                  {!isConnected && (
+                    <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                      <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
+                      Connect your wallet to start betting
                     </div>
-                    <div className="mt-4 pt-4 space-y-2">
-                      <div>
-                        <div className="font-semibold text-sm">Start time</div>
-                        <div className="-mt-0.5">{new Date(onChainInfo.dates.startTime * 1000).toUTCString()}</div>
+                  )}
+                  {isConnected && fixture.status === "Not Started" && !isPoolOpen && (
+                    <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                      <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
+                      No bets yet. Place a bet to start a pool
+                    </div>
+                  )}
+                  {isConnected && fixture.status != "Not Started" && fixture.status != "Match Finished" && (
+                    <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                      <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
+                      You can't place any bets if the match is in progress
+                    </div>
+                  )}
+                  {(true ||
+                    (isConnected && fixture.status === "Match Finished" && onChainInfo.result === 0 && isPoolOpen)) && (
+                    <div className="divide-y divide-blue-600 w-full border text-blue-900 mt-7 py-4 rounded border-blue-600 bg-blue-50">
+                      <div className="flex justify-center text-center items-center">
+                        <Image src="/functions.png" className="mr-3" alt="Chainlink functions" width={20} height={20} />
+                        Verified on-chain data
                       </div>
-                      <div>
-                        <div className="font-semibold text-sm">End time</div>
-                        <div className="-mt-0.5">{new Date(onChainInfo.dates.endTime * 1000).toUTCString()}</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-sm">Result</div>
-                        {fixture.status === "Match Finished" && onChainInfo.result === 0 && (
-                          <button
-                            type="button"
-                            disabled={!isConnected || isLoading}
-                            onClick={handleVerifyResult}
-                            className={
-                              "h-8 px-2 font-medium rounded-lg text-sm text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300"
-                            }
-                          >
-                            Verity result on-chain
-                          </button>
-                        )}
-                        {fixture.status != "Match Finished" && (
-                          <div className="-mt-0.5">Waiting until match finishes</div>
-                        )}
-                        {fixture.status === "Match Finished" && onChainInfo.result != 0 && (
-                          <div className="-mt-0.5 flex justify-center text-center items-center">
-                            <Image
-                              className="mr-0.5"
-                              src={
-                                onChainInfo.result === 1
-                                  ? fixture.home.logo
-                                  : onChainInfo.result === 2
-                                  ? fixture.away.logo
-                                  : onChainInfo.result === 3
-                                  ? "Draw"
-                                  : "Error"
+                      <div className="mt-4 pt-4 space-y-2">
+                        <div>
+                          <div className="font-semibold text-sm">Start time</div>
+                          <div className="-mt-0.5">{new Date(onChainInfo.dates.startTime * 1000).toUTCString()}</div>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm">End time</div>
+                          <div className="-mt-0.5">{new Date(onChainInfo.dates.endTime * 1000).toUTCString()}</div>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm">Result</div>
+                          {fixture.status === "Match Finished" && onChainInfo.result === 0 && (
+                            <button
+                              type="button"
+                              disabled={!isConnected || isLoading}
+                              onClick={handleVerifyResult}
+                              className={
+                                "h-8 px-2 font-medium rounded-lg text-sm text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300"
                               }
-                              alt={
-                                onChainInfo.result === 1
-                                  ? fixture.home.name
-                                  : onChainInfo.result === 2
-                                  ? fixture.away.name
-                                  : onChainInfo.result === 3
-                                  ? "Draw"
-                                  : "Error"
-                              }
-                              width={18}
-                              height={18}
-                            />
-                            Won
-                          </div>
-                        )}
+                            >
+                              Verity result on-chain
+                            </button>
+                          )}
+                          {fixture.status != "Match Finished" && (
+                            <div className="-mt-0.5">Waiting until match finishes</div>
+                          )}
+                          {fixture.status === "Match Finished" && onChainInfo.result != 0 && (
+                            <div className="-mt-0.5 flex justify-center text-center items-center">
+                              <Image
+                                className="mr-0.5"
+                                src={
+                                  onChainInfo.result === 1
+                                    ? fixture.home.logo
+                                    : onChainInfo.result === 2
+                                    ? fixture.away.logo
+                                    : onChainInfo.result === 3
+                                    ? "Draw"
+                                    : "Error"
+                                }
+                                alt={
+                                  onChainInfo.result === 1
+                                    ? fixture.home.name
+                                    : onChainInfo.result === 2
+                                    ? fixture.away.name
+                                    : onChainInfo.result === 3
+                                    ? "Draw"
+                                    : "Error"
+                                }
+                                width={18}
+                                height={18}
+                              />
+                              Won
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+                <TeamSection
+                  {...{
+                    team: fixture.away,
+                    address: userAddress,
+                    state: betData.away,
+                    otherState: betData.home,
+                    payout: payout.away,
+                    totalBets: payout.totalBets,
+                    currentPool: onChainInfo.totalBets.away,
+                    otherPool: onChainInfo.totalBets.home,
+                    currentUser: onChainInfo.ownBets.away,
+                    isPoolOpen,
+                    status: fixture.status,
+                    result: onChainInfo.result,
+                    side: "away",
+                    isConnected,
+                    isLoading,
+                    isWaitingTx,
+                    handleFormChange,
+                    handleBet,
+                    handleWithdrawal,
+                  }}
+                />
               </div>
-              <TeamSection
-                {...{
-                  team: fixture.away,
-                  address: userAddress,
-                  state: betData.away,
-                  otherState: betData.home,
-                  payout: payout.away,
-                  totalBets: payout.totalBets,
-                  currentPool: onChainInfo.totalBets.away,
-                  otherPool: onChainInfo.totalBets.home,
-                  currentUser: onChainInfo.ownBets.away,
-                  isPoolOpen,
-                  status: fixture.status,
-                  result: onChainInfo.result,
-                  side: "away",
-                  isConnected,
-                  isLoading,
-                  isWaitingTx,
-                  handleFormChange,
-                  handleBet,
-                  handleWithdrawal,
-                }}
-              />
             </div>
           </div>
         )}

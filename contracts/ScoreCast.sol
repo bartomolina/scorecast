@@ -27,9 +27,9 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
   mapping (bytes32 => string) requestToFixture;
 
   mapping (string => FixtureInfo) fixtureToFixtureInfo;
-  mapping (string => mapping (address => mapping(string => uint))) fixtureToBets;
-  mapping (string => mapping (address => mapping(string => uint))) fixtureToClaims;
-  mapping (string => mapping (string => uint)) fixtureToTotalBets;
+  mapping (string => mapping (address => mapping(uint => uint))) fixtureToBets;
+  mapping (string => mapping (address => mapping(uint => uint))) fixtureToClaims;
+  mapping (string => mapping (uint => uint)) fixtureToTotalBets;
   mapping (string => bytes) fixtureToResults;
   string[] activePools;
 
@@ -38,13 +38,9 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
   uint64 subscriptionId = 234;
   uint32 gasLimit = 300000;
 
-  event OCRResponse(bytes32 indexed requestId, bytes result, bytes err);
-  event RequestExecuted(bytes32 assignedReqID, string fixtureId);
-  event FulfillingRequest(string fixtureId);
-  event FulfillingRequest2(bytes response);
-  event FulfillingRequest3(string fixtureId, bytes response);
-
   constructor(address oracle) FunctionsClient(oracle) ConfirmedOwner(msg.sender) {}
+
+  event RequestExecuted(bytes32 assignedReqID, string fixtureId);
 
   function executeRequest(
     string[] calldata fixtureId
@@ -62,6 +58,8 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     emit RequestExecuted(assignedReqID, fixtureId[0]);
     return assignedReqID;
   }
+
+  event OCRResponse(bytes32 indexed requestId, bytes result, bytes err);
 
   function fulfillRequest(
     bytes32 requestId,
@@ -96,9 +94,11 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     subscriptionId = _subscriptionId;
   }
 
-  function placeBet(string calldata fixtureId, string calldata bet, uint256 startTime, uint256 endTime) external payable {
+  event BetPlaced(string indexed fixtureId, address indexed _address, uint bet, uint value);
+
+  function placeBet(string calldata fixtureId, uint bet, uint256 startTime, uint256 endTime) external payable {
     // TODO: require starttime < current
-    if (fixtureToTotalBets[fixtureId]["1"] == 0 && fixtureToTotalBets[fixtureId]["2"] == 0) {
+    if (fixtureToTotalBets[fixtureId][1] == 0 && fixtureToTotalBets[fixtureId][2] == 0) {
       activePools.push(fixtureId);
       FixtureInfo memory fixtureInfo = FixtureInfo(startTime, endTime);
       fixtureToFixtureInfo[fixtureId] = fixtureInfo;
@@ -106,6 +106,7 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
 
     fixtureToBets[fixtureId][msg.sender][bet] += msg.value;
     fixtureToTotalBets[fixtureId][bet] += msg.value;
+    emit BetPlaced(fixtureId, msg.sender, bet, msg.value);
   }
 
   function getResult(string calldata fixtureId) public view returns(bytes memory){
@@ -113,19 +114,29 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
   }
 
   function getBets(string calldata fixtureId) public view returns(uint, uint){
-    return (fixtureToTotalBets[fixtureId]["1"], fixtureToTotalBets[fixtureId]["2"]);
+    return (fixtureToTotalBets[fixtureId][1], fixtureToTotalBets[fixtureId][2]);
   }
 
-  function getUserBets(string calldata fixtureId, address user) public view returns(uint, uint){
-    return (fixtureToBets[fixtureId][user]["1"], fixtureToBets[fixtureId][user]["2"]);
+  function getUserBets(string calldata fixtureId, address user) public view returns(uint, uint, uint, uint){
+    return (fixtureToBets[fixtureId][user][1], fixtureToBets[fixtureId][user][2], fixtureToClaims[fixtureId][user][1], fixtureToClaims[fixtureId][user][2]);
   }
 
-  function getFixtureData(string calldata fixtureId, address user) public view returns(FixtureInfo memory fixtureInfo, uint totalHome, uint totalAway, uint ownHome, uint ownAway, bytes memory result){
+  function getFixtureData(string calldata fixtureId, address user) public view returns(
+    FixtureInfo memory fixtureInfo,
+    uint totalHome,
+    uint totalAway,
+    uint ownHome,
+    uint ownHomeClaimed,
+    uint ownAway,
+    uint ownAwayClaimed,
+    bytes memory result){
     fixtureInfo = fixtureToFixtureInfo[fixtureId];
     (totalHome, totalAway) = getBets(fixtureId);
-    (ownHome, ownAway) = getUserBets(fixtureId, user);
+    (ownHome, ownAway, ownHomeClaimed, ownAwayClaimed) = getUserBets(fixtureId, user);
     result = getResult(fixtureId);
   }
+
+  event Withdraw(string indexed fixtureId, address indexed _address, uint value);
 
   function withdraw(string calldata fixtureId) external {
     // TODO: check endtime < current
@@ -135,25 +146,27 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
       (bool success, ) = payable(msg.sender).call{value: calculatedAmount}("");
       require(success);
     }
+
+    emit Withdraw(fixtureId, msg.sender, calculatedAmount);
   }
 
   function claimableAmount(string calldata fixtureId) public returns(uint){
     // TODO: check endtime < current
     (uint totalHome, uint totalAway) = getBets(fixtureId);
-    string memory result = string(fixtureToResults[fixtureId]);
-    uint ownAmount = fixtureToBets[fixtureId][msg.sender][string(result)];
+    uint result = uint(bytes32(fixtureToResults[fixtureId]));
+    uint ownAmount = fixtureToBets[fixtureId][msg.sender][result];
     uint calculatedAmount;
 
-    if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked("1")) && totalAway > 0) {
+    if (result == 1 && totalAway > 0) {
       calculatedAmount = ownAmount * (totalHome + totalAway) / totalHome;
     }
     
-    if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked("2")) && totalHome > 0) {
+    if (result == 2 && totalHome > 0) {
       calculatedAmount = ownAmount * (totalHome + totalAway) / totalAway;
     }
 
-    require(fixtureToClaims[fixtureId][msg.sender][string(result)] == 0, "Already claimed");
-    fixtureToClaims[fixtureId][msg.sender][string(result)] = calculatedAmount;
+    require(fixtureToClaims[fixtureId][msg.sender][result] == 0, "Already claimed");
+    fixtureToClaims[fixtureId][msg.sender][result] = calculatedAmount;
 
     return calculatedAmount;
   }
@@ -175,7 +188,7 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     return source;
   }
 
-  function setResult(string calldata fixtureId, string calldata result) external onlyOwner {
-    fixtureToResults[fixtureId] = bytes(result);
+  function setResult(string calldata fixtureId, uint result) external onlyOwner {
+    fixtureToResults[fixtureId] = abi.encodePacked(result);
   }
 }

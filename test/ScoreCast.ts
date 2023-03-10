@@ -50,7 +50,7 @@ describe("ScoreCast", function () {
       console.log("Contract balance before: ", hre.ethers.utils.formatEther(contractBalance));
 
       // Set result to "1" (home)
-      const setResultTx = await scoreCast.setResult(fixture1.fixtureId, "1");
+      const setResultTx = await scoreCast.setResult(fixture1.fixtureId, 1);
       setResultTx.wait();
 
       // Check account balance before and after withdrawal

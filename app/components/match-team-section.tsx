@@ -71,7 +71,7 @@ const TeamSection = ({
             )}
           </>
         )}
-        {(false || (isConnected && status != "Match Finished")) && (
+        {(true || (isConnected && status != "Match Finished")) && (
           <form action="#" method="POST" className="mt-2">
             <label htmlFor={side} className="sr-only">
               {`Bet ${side} team`}
@@ -90,7 +90,7 @@ const TeamSection = ({
             <button
               type="button"
               disabled={!isConnected || isLoading}
-              onClick={(e) => handleBet(e, side === "home" ? "1" : "2")}
+              onClick={(e) => handleBet(e, side === "home" ? 1 : 2)}
               className={
                 "ml-2 h-10 px-5 font-medium rounded-lg text-lg text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300"
               }
