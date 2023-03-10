@@ -67,6 +67,3 @@ describe("ScoreCast", function () {
     });
   });
 });
-
-// 1. Withdraw calculations
-//    - Should allow withdraw only if finished

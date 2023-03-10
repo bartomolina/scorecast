@@ -1,12 +1,12 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import useSWR from "swr";
 import axios from "axios";
 import { BigNumber, ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { writeContract, readContract, waitForTransaction } from "@wagmi/core";
+import Image from "next/image";
 import { MapPinIcon, ClockIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useNotifications } from "../../components/notifications-context";
 import ConsumerContractJSON from "../../lib/contracts/consumer-contract.json";
@@ -17,12 +17,24 @@ const fetcher = (url) => axios.get(url).then((res) => res.data);
 const Match = () => {
   const router = useRouter();
   const { data } = useSWR("/api/getFixtures", fetcher);
+  const [onChainInfo, setOnChainInfo] = useState({
+    dates: {
+      startTime: 0,
+      endTime: 0,
+    },
+    totalBets: {
+      home: 0,
+      away: 0,
+    },
+    ownBets: {
+      home: 0,
+      away: 0,
+    },
+    result: 0,
+  });
   const [betData, setBetData] = useState({
-    currentHome: "0",
-    currentAway: "0",
     home: 0,
     away: 0,
-    result: 0 as Number,
   });
   const [payout, setPayout] = useState({
     home: 0,
@@ -30,9 +42,17 @@ const Match = () => {
     totalBets: 0,
   });
   const { showNotification, showError } = useNotifications();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
   const [isWaitingTx, setIsWaitingTx] = useState(false);
+
+  const userAddress = useMemo(() => {
+    return address ? address : "0x0000000000000000000000000000000000000000";
+  }, [address]);
+
+  const isPoolOpen = useMemo(() => {
+    return !(onChainInfo.totalBets.home && onChainInfo.totalBets.away);
+  }, [betData]);
 
   const fixture = useMemo(() => {
     return data ? data.find((f) => f.id === parseInt(router.query.id as string)) : null;
@@ -42,22 +62,25 @@ const Match = () => {
     if (fixture) {
       getMatchData();
     }
-  }, [fixture]);
+  }, [fixture, address]);
+  console.log(onChainInfo);
 
   useEffect(() => {
     calculatePayout();
   }, [betData]);
 
   const handleFormChange = (event: FormEvent<HTMLInputElement>) => {
+    let value = parseFloat(event.currentTarget.value);
+    value = isNaN(value) ? 0 : value;
     setBetData({
       ...betData,
-      [event.currentTarget.id]: parseFloat(event.currentTarget.value),
+      [event.currentTarget.id]: value,
     });
   };
 
   const calculatePayout = () => {
-    const homeBets = parseFloat(betData.currentHome) + betData.home;
-    const awayBets = parseFloat(betData.currentAway) + betData.away;
+    const homeBets = parseFloat(onChainInfo.totalBets.home) + betData.home;
+    const awayBets = parseFloat(onChainInfo.totalBets.away) + betData.away;
     const totalBets = homeBets + awayBets;
 
     setPayout({
@@ -81,27 +104,25 @@ const Match = () => {
       address: ConsumerContractJSON.address,
       // @ts-ignore
       abi: ConsumerContractJSON.abi,
-      functionName: "getResult",
+      functionName: "getFixtureData",
       // @ts-ignore
-      args: [fixture.id.toString()],
+      args: [fixture.id.toString(), ethers.utils.getAddress(userAddress)],
     })
       .then((result) => {
-        const verifiedResult = !isNaN(parseInt(result, 16)) ? parseInt(result, 16) : 0;
-        readContract({
-          // @ts-ignore
-          address: ConsumerContractJSON.address,
-          // @ts-ignore
-          abi: ConsumerContractJSON.abi,
-          functionName: "getBets",
-          // @ts-ignore
-          args: [fixture.id.toString()],
-        }).then((result: any) => {
-          setBetData({
-            ...betData,
-            currentHome: ethers.utils.formatEther(result[0]),
-            currentAway: ethers.utils.formatEther(result[1]),
-            result: verifiedResult,
-          });
+        setOnChainInfo({
+          dates: {
+            startTime: result.fixtureInfo.startTime.toNumber(),
+            endTime: result.fixtureInfo.endTime.toNumber(),
+          },
+          totalBets: {
+            home: ethers.utils.formatEther(result.totalHome),
+            away: ethers.utils.formatEther(result.totalAway),
+          },
+          ownBets: {
+            home: ethers.utils.formatEther(result.ownHome),
+            away: ethers.utils.formatEther(result.ownAway),
+          },
+          result: !isNaN(parseInt(result.result, 16)) ? parseInt(result.result, 16) : 0,
         });
       })
       .catch((error) => {
@@ -121,7 +142,7 @@ const Match = () => {
         // @ts-ignore
         abi: ConsumerContractJSON.abi,
         functionName: "placeBet",
-        args: [fixture.id.toString(), bet],
+        args: [fixture.id.toString(), bet, fixture.date, fixture.date + 2.5 * 60 * 60],
         overrides: {
           value: ethers.utils.parseEther(betAmount.toString()),
         },
@@ -137,6 +158,8 @@ const Match = () => {
           clearForm();
           // @ts-ignore
           showNotification("Bet placed", tx.transactionHash);
+          getMatchData();
+          calculatePayout();
         })
         .catch((error) => {
           setIsLoading(false);
@@ -146,8 +169,6 @@ const Match = () => {
   };
 
   const handleVerifyResult = (event: FormEvent) => {
-    console.log([fixture.id.toString(), process.env.NEXT_PUBLIC_RAPIDAPI_KEY]);
-    console.log(ConsumerContractJSON.address);
     if (fixture) {
       setIsLoading(true);
       writeContract({
@@ -172,6 +193,7 @@ const Match = () => {
           clearForm();
           // @ts-ignore
           showNotification("Verifying result. This may take a few seconds, come back later", tx.transactionHash);
+          getMatchData();
         })
         .catch((error) => {
           setIsLoading(false);
@@ -202,10 +224,14 @@ const Match = () => {
               <TeamSection
                 {...{
                   team: fixture.home,
+                  address: userAddress,
                   state: betData.home,
+                  otherState: betData.away,
                   payout: payout.home,
                   totalBets: payout.totalBets,
-                  currentPool: betData.currentHome,
+                  currentPool: onChainInfo.totalBets.home,
+                  currentUser: onChainInfo.ownBets.home,
+                  isPoolOpen,
                   status: fixture.status,
                   side: "home",
                   isConnected,
@@ -241,7 +267,7 @@ const Match = () => {
                     Connect your wallet to start betting
                   </div>
                 )}
-                {isConnected && fixture.status === "Not Started" && payout.totalBets === 0 && (
+                {isConnected && fixture.status === "Not Started" && !isPoolOpen && (
                   <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
                     <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
                     No bets yet. Place a bet to start a pool
@@ -253,41 +279,83 @@ const Match = () => {
                     You can't place any bets if the match is in progress
                   </div>
                 )}
-                {isConnected &&
-                  fixture.status === "Match Finished" &&
-                  betData.result === 0 &&
-                  payout.totalBets != 0 && (
-                    <>
-                      <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
-                        <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
-                        Match finished. Verify results onchain to claim your stake
+                {(true ||
+                  (isConnected && fixture.status === "Match Finished" && onChainInfo.result === 0 && isPoolOpen)) && (
+                  <div className="divide-y divide-blue-600 w-full border text-blue-900 mt-7 py-4 rounded border-blue-600 bg-blue-50">
+                    <div className="flex justify-center text-center items-center">
+                      <Image src="/functions.png" className="mr-3" alt="Chainlink functions" width={20} height={20} />
+                      Verified on-chain data
+                    </div>
+                    <div className="mt-4 pt-4 space-y-2">
+                      <div>
+                        <div className="font-semibold text-sm">Start time</div>
+                        <div className="-mt-0.5">{new Date(onChainInfo.dates.startTime * 1000).toUTCString()}</div>
                       </div>
-                      <button
-                        type="button"
-                        disabled={!isConnected || isLoading}
-                        onClick={handleVerifyResult}
-                        className={
-                          "mt-4 h-10 px-5 font-medium rounded-lg text-sm text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300"
-                        }
-                      >
-                        Verity result on-chain
-                      </button>
-                    </>
-                  )}
-                {isConnected && fixture.status === "Match Finished" && betData.result != 0 && payout.totalBets != 0 && (
-                  <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
-                    <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
-                    Match finished. You can claim your stake
+                      <div>
+                        <div className="font-semibold text-sm">End time</div>
+                        <div className="-mt-0.5">{new Date(onChainInfo.dates.endTime * 1000).toUTCString()}</div>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-sm">Result</div>
+                        {fixture.status === "Match Finished" && onChainInfo.result === 0 && (
+                          <button
+                            type="button"
+                            disabled={!isConnected || isLoading}
+                            onClick={handleVerifyResult}
+                            className={
+                              "h-8 px-2 font-medium rounded-lg text-sm text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300"
+                            }
+                          >
+                            Verity result on-chain
+                          </button>
+                        )}
+                        {fixture.status != "Match Finished" && (
+                          <div className="-mt-0.5">Waiting until match finishes</div>
+                        )}
+                        {fixture.status === "Match Finished" && onChainInfo.result != 0 && (
+                          <div className="-mt-0.5 flex justify-center text-center items-center">
+                            <Image
+                              className="mr-0.5"
+                              src={
+                                onChainInfo.result === 1
+                                  ? fixture.home.logo
+                                  : onChainInfo.result === 2
+                                  ? fixture.away.logo
+                                  : onChainInfo.result === 3
+                                  ? "Draw"
+                                  : "Error"
+                              }
+                              alt={
+                                onChainInfo.result === 1
+                                  ? fixture.home.name
+                                  : onChainInfo.result === 2
+                                  ? fixture.away.name
+                                  : onChainInfo.result === 3
+                                  ? "Draw"
+                                  : "Error"
+                              }
+                              width={18}
+                              height={18}
+                            />
+                            Won
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
               <TeamSection
                 {...{
                   team: fixture.away,
+                  address: userAddress,
                   state: betData.away,
+                  otherState: betData.home,
                   payout: payout.away,
                   totalBets: payout.totalBets,
-                  currentPool: betData.currentAway,
+                  currentPool: onChainInfo.totalBets.away,
+                  currentUser: onChainInfo.ownBets.away,
+                  isPoolOpen,
                   status: fixture.status,
                   side: "away",
                   isConnected,

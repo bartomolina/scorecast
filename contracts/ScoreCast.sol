@@ -107,7 +107,7 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     fixtureToTotalBets[fixtureId][bet] += msg.value;
   }
 
-  function getResult(string calldata fixtureId) external view returns(bytes memory){
+  function getResult(string calldata fixtureId) public view returns(bytes memory){
     return fixtureToResults[fixtureId];
   }
 
@@ -125,8 +125,15 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     return (fixtureToTotalBets[fixtureId]["1"], fixtureToTotalBets[fixtureId]["2"]);
   }
 
-  function getOwnBets(string calldata fixtureId) external view returns(uint, uint){
-    return (fixtureToBets[fixtureId][msg.sender]["1"], fixtureToBets[fixtureId][msg.sender]["1"]);
+  function getUserBets(string calldata fixtureId, address user) public view returns(uint, uint){
+    return (fixtureToBets[fixtureId][user]["1"], fixtureToBets[fixtureId][user]["2"]);
+  }
+
+  function getFixtureData(string calldata fixtureId, address user) public view returns(FixtureInfo memory fixtureInfo, uint totalHome, uint totalAway, uint ownHome, uint ownAway, bytes memory result){
+    fixtureInfo = fixtureToFixtureInfo[fixtureId];
+    (totalHome, totalAway) = getBets(fixtureId);
+    (ownHome, ownAway) = getUserBets(fixtureId, user);
+    result = getResult(fixtureId);
   }
 
   function claimableAmount(string calldata fixtureId) public view returns(uint){
@@ -160,11 +167,11 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
     return requestToFixture[requestId];
   }
 
-  function setResult(string calldata fixtureId, string calldata result) external {
-    fixtureToResults[fixtureId] = bytes(result);
-  }
-
   function getSource() external view returns(string memory){
     return source;
+  }
+
+  function setResult(string calldata fixtureId, string calldata result) external onlyOwner {
+    fixtureToResults[fixtureId] = bytes(result);
   }
 }
