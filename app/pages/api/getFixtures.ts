@@ -64,6 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               winner: fixture.teams.away.winner,
               goals: fixture.goals.away,
             },
+            active: false,
           };
         });
         writeFile(cacheFile, JSON.stringify(filteredFixtures), "utf8");

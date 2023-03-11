@@ -269,7 +269,7 @@ const Match = () => {
           className={`text-lg inline-block mt-4 px-2 rounded text-white ${
             fixture.status === "Match Finished"
               ? "bg-green-500"
-              : fixture.status === "First Half"
+              : fixture.status === "First Half" || fixture.status === "Second Half"
               ? "bg-orange-500"
               : "bg-red-500"
           }`}
@@ -280,7 +280,7 @@ const Match = () => {
       <div className="pb-14">
         {fixture && (
           <div className="mx-auto max-w-6xl sm:px-6 lg:px-8 py-4">
-            <div className="flex p-3 items-center rounded-lg bg-gradient-to-br from-green-400 to-blue-600 shadow-md">
+            <div className="flex p-2 items-center rounded-lg bg-gradient-to-br from-green-400 to-blue-600 shadow-md">
               <div className="grid grid-cols-3 gap-4 justify-items-center text-center items-center bg-white py-14 rounded-md h-full w-full">
                 <TeamSection
                   {...{
@@ -352,7 +352,7 @@ const Match = () => {
                                 "h-8 px-2 font-medium rounded-lg text-sm text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300"
                               }
                             >
-                              Verity result on-chain
+                              Verify result on-chain
                             </button>
                           )}
                           {fixture.status != "Match Finished" && (
