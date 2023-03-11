@@ -29,6 +29,10 @@ const Match = () => {
     ownBets: {
       home: 0,
       away: 0,
+      claimed: {
+        home: 0,
+        away: 0,
+      },
     },
     result: 0,
   });
@@ -108,6 +112,7 @@ const Match = () => {
       args: [fixture.id.toString(), ethers.utils.getAddress(userAddress)],
     })
       .then((result) => {
+        console.log(result);
         setOnChainInfo({
           dates: {
             startTime: result.fixtureInfo.startTime.toNumber(),
@@ -120,6 +125,10 @@ const Match = () => {
           ownBets: {
             home: parseFloat(ethers.utils.formatEther(result.ownHome)),
             away: parseFloat(ethers.utils.formatEther(result.ownAway)),
+            claimed: {
+              home: parseFloat(ethers.utils.formatEther(result.ownHomeClaimed)),
+              away: parseFloat(ethers.utils.formatEther(result.ownAwayClaimed)),
+            },
           },
           result: !isNaN(parseInt(result.result, 16)) ? parseInt(result.result, 16) : 0,
         });
@@ -240,7 +249,7 @@ const Match = () => {
         <title>{fixture ? `${fixture.home.name} vs. ${fixture.away.name} - ScoreCast.io` : ""}</title>
         <meta name="description" content="ScoreCast" />
       </Head>
-      <header className="mx-auto max-w-6xl px-6 lg:px-8 py-14 text-center">
+      <header className="mx-auto max-w-6xl px-6 lg:px-8 py-10 text-center">
         <h1 className="text-5xl font-semibold leading-tight tracking-tight text-gray-900">
           {fixture && (
             <>
@@ -248,12 +257,31 @@ const Match = () => {
             </>
           )}
         </h1>
+        <div className="text-lg text-gray-900 flex justify-center text-center items-center">
+          <ClockIcon className="inline mr-1 h-4 w-4" />
+          {new Date(fixture.date * 1000).toUTCString()}
+        </div>
+        <div className="text-gray-500  flex justify-center text-center items-center">
+          <MapPinIcon className="inline mr-1 h-4 w-4" />
+          {fixture.venue}
+        </div>
+        <div
+          className={`text-lg inline-block mt-4 px-2 rounded text-white ${
+            fixture.status === "Match Finished"
+              ? "bg-green-500"
+              : fixture.status === "First Half"
+              ? "bg-orange-500"
+              : "bg-red-500"
+          }`}
+        >
+          {fixture.status}
+        </div>
       </header>
       <div className="pb-14">
         {fixture && (
-          <div className="mx-auto max-w-6xl sm:px-6 lg:px-8 py-7">
+          <div className="mx-auto max-w-6xl sm:px-6 lg:px-8 py-4">
             <div className="flex p-3 items-center rounded-lg bg-gradient-to-br from-green-400 to-blue-600 shadow-md">
-              <div className="grid grid-cols-3 gap-4 justify-items-center text-center items-center bg-white py-20 rounded-md h-full w-full">
+              <div className="grid grid-cols-3 gap-4 justify-items-center text-center items-center bg-white py-14 rounded-md h-full w-full">
                 <TeamSection
                   {...{
                     team: fixture.home,
@@ -265,6 +293,7 @@ const Match = () => {
                     currentPool: onChainInfo.totalBets.home,
                     otherPool: onChainInfo.totalBets.away,
                     currentUser: onChainInfo.ownBets.home,
+                    currentUserClaimed: onChainInfo.ownBets.claimed.home,
                     isPoolOpen,
                     status: fixture.status,
                     result: onChainInfo.result,
@@ -278,39 +307,20 @@ const Match = () => {
                   }}
                 />
                 <div>
-                  <div className="text-lg text-gray-900 flex justify-center text-center items-center">
-                    <ClockIcon className="inline mr-1 h-4 w-4" />
-                    {new Date(fixture.date * 1000).toUTCString()}
-                  </div>
-                  <div className="text-gray-500  flex justify-center text-center items-center">
-                    <MapPinIcon className="inline mr-1 h-4 w-4" />
-                    {fixture.venue}
-                  </div>
-                  <div
-                    className={`text-lg inline-block mt-4 px-2 rounded text-white ${
-                      fixture.status === "Match Finished"
-                        ? "bg-green-500"
-                        : fixture.status === "First Half"
-                        ? "bg-orange-500"
-                        : "bg-red-500"
-                    }`}
-                  >
-                    {fixture.status}
-                  </div>
                   {!isConnected && (
-                    <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                    <div className="text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
                       <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
                       Connect your wallet to start betting
                     </div>
                   )}
                   {isConnected && fixture.status === "Not Started" && !isPoolOpen && (
-                    <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                    <div className="text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
                       <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
                       No bets yet. Place a bet to start a pool
                     </div>
                   )}
                   {isConnected && fixture.status != "Not Started" && fixture.status != "Match Finished" && (
-                    <div className="mt-14 text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                    <div className="text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
                       <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
                       You can't place any bets if the match is in progress
                     </div>
@@ -322,7 +332,7 @@ const Match = () => {
                         <Image src="/functions.png" className="mr-3" alt="Chainlink functions" width={20} height={20} />
                         Verified on-chain data
                       </div>
-                      <div className="mt-4 pt-4 space-y-2">
+                      <div className="mt-4 px-4 pt-4 space-y-2">
                         <div>
                           <div className="font-semibold text-sm">Start time</div>
                           <div className="-mt-0.5">{new Date(onChainInfo.dates.startTime * 1000).toUTCString()}</div>
@@ -392,6 +402,7 @@ const Match = () => {
                     currentPool: onChainInfo.totalBets.away,
                     otherPool: onChainInfo.totalBets.home,
                     currentUser: onChainInfo.ownBets.away,
+                    currentUserClaimed: onChainInfo.ownBets.claimed.away,
                     isPoolOpen,
                     status: fixture.status,
                     result: onChainInfo.result,

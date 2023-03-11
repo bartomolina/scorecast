@@ -12,6 +12,7 @@ const TeamSection = ({
   currentPool,
   otherPool,
   currentUser,
+  currentUserClaimed,
   isPoolOpen,
   status,
   result,
@@ -35,7 +36,7 @@ const TeamSection = ({
       <div className="mt-5 text-gray-900">
         {(false || (isConnected && isPoolOpen)) && (
           <>
-            <div className="text-4xl flex justify-center text-center items-center">
+            <div className="text-5xl font-medium text-gray-800 flex justify-center text-center items-center">
               <Image src="/matic.png" alt="MATIC" width={30} height={30} />
               <div className="ml-2">{currentPool}</div>
             </div>
@@ -48,12 +49,14 @@ const TeamSection = ({
               <span className={"ml-2"}>
                 <div className="flex justify-center text-center items-center">
                   <Image src="/matic.png" alt="MATIC" width={10} height={10} />
-                  <div className="ml-0.5">{currentUser}</div>
+                  <div className="ml-0.5 font-semibold">{currentUser}</div>
                 </div>
               </span>
             </div>
             {(false ||
-              (currentUser > 0 && ((result === 1 && side === "home") || (result === 2 && side === "away")))) && (
+              (currentUserClaimed === 0 &&
+                currentUser > 0 &&
+                ((result === 1 && side === "home") || (result === 2 && side === "away")))) && (
               <button
                 type="button"
                 disabled={!isConnected || isLoading}
@@ -71,7 +74,7 @@ const TeamSection = ({
             )}
           </>
         )}
-        {(true || (isConnected && status != "Match Finished")) && (
+        {(false || (isConnected && status != "Match Finished")) && (
           <form action="#" method="POST" className="mt-2">
             <label htmlFor={side} className="sr-only">
               {`Bet ${side} team`}
