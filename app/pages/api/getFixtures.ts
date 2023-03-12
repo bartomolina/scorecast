@@ -9,11 +9,12 @@ const writeFile = fs.promises.writeFile;
 const cacheFile = resolve("./data/cache");
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  let fixtures;
+  let fixtures: any;
 
   const refreshCacheSeconds = 3 * 60 * 60; // 12 hours
   let refreshCache = false;
 
+  console.log("Checking cache file");
   if (fs.existsSync(cacheFile)) {
     const fileStats = fs.statSync(cacheFile);
     const secondsSinceLastUpdate = (new Date().getTime() - new Date(fileStats.mtime).getTime()) / 1000;
@@ -33,11 +34,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
   } else {
+    console.log("Cache file does not exist");
     refreshCache = true;
   }
 
   if (refreshCache) {
-    axios
+    console.log("Calling API and refreshing cache");
+    return axios
       .get("https://v3.football.api-sports.io/fixtures?season=2022&league=140", {
         headers: {
           "x-rapidapi-host": "v3.football.api-sports.io",
@@ -45,6 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       })
       .then((response) => {
+        console.log("API data retrieved");
         let filteredFixtures = response.data.response.map((fixture: any) => {
           return {
             id: fixture.fixture.id,
@@ -71,7 +75,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
         writeFile(cacheFile, JSON.stringify(filteredFixtures), "utf8");
         fixtures = filteredFixtures;
-      });
+      })
+      .then(() => {
+        console.log("Done writting cache. Returning data");
+        res.status(200).json(fixtures);
+      })
+  } else {
+    console.log("Returning cached data");
+    res.status(200).json(fixtures);
   }
-  res.status(200).json(fixtures);
 }
