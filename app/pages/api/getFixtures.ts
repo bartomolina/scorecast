@@ -78,10 +78,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .then(() => {
         console.log("Done writting cache. Returning data");
-        res.status(200).json(fixtures);
+        return res.status(200).json(fixtures);
       })
   } else {
     console.log("Returning cached data");
-    res.status(200).json(fixtures);
+    return res.status(200).json(fixtures);
   }
 }
