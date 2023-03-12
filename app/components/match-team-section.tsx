@@ -4,26 +4,27 @@ import Image from "next/image";
 import { truncateEthAddress } from "../lib/utils";
 
 type Props = {
-  team: ITeamInfo,
-  address: `0x${string}`,
-  state: number,
-  otherState: number,
-  payout: number,
-  totalBets: number,
-  currentPool: number,
-  otherPool: number,
-  currentUser: number,
-  currentUserClaimed: number,
-  isPoolOpen: boolean,
-  status: string,
-  result: number,
-  side: "home" | "away",
-  isConnected: boolean,
-  isLoading: boolean,
-  isWaitingTx: boolean,
-  handleFormChange: (event: FormEvent<HTMLInputElement>) => void,
-  handleBet: (event: FormEvent, bet: Number) => void,
-  handleWithdrawal: (event: FormEvent) => void,
+  team: ITeamInfo;
+  address: `0x${string}`;
+  state: number;
+  otherState: number;
+  payout: number;
+  totalBets: number;
+  currentPool: number;
+  otherPool: number;
+  currentUser: number;
+  currentUserClaimed: number;
+  isPoolOpen: boolean;
+  status: string;
+  goals: number;
+  result: number;
+  side: "home" | "away";
+  isConnected: boolean;
+  isLoading: boolean;
+  isWaitingTx: boolean;
+  handleFormChange: (event: FormEvent<HTMLInputElement>) => void;
+  handleBet: (event: FormEvent, bet: Number) => void;
+  handleWithdrawal: (event: FormEvent) => void;
 };
 
 const TeamSection = ({
@@ -39,6 +40,7 @@ const TeamSection = ({
   currentUserClaimed,
   isPoolOpen,
   status,
+  goals,
   result,
   side,
   isConnected,
@@ -54,7 +56,8 @@ const TeamSection = ({
 
   return (
     <div>
-      <div className="flex justify-center">
+      <div className={`${side === "home" ? "flex-row-reverse " : ""}flex space-x-3 justify-center items-center`}>
+        <div className={`text-8xl font-medium text-blue-900 p-3`}>{goals}</div>
         <Image src={team.logo} alt={team.name} width={160} height={160} quality={100} />
       </div>
       <div className="mt-5 text-gray-900">
@@ -98,7 +101,7 @@ const TeamSection = ({
             )}
           </>
         )}
-        {(false || (isConnected && status != "Match Finished")) && (
+        {(false || (isConnected && status === "Not Started")) && (
           <form action="#" method="POST" className="mt-2">
             <label htmlFor={side} className="sr-only">
               {`Bet ${side} team`}

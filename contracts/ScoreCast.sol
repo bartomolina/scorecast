@@ -97,7 +97,7 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
   event BetPlaced(string indexed fixtureId, address indexed _address, uint bet, uint value);
 
   function placeBet(string calldata fixtureId, uint bet, uint256 startTime, uint256 endTime) external payable {
-    // TODO: require starttime < current
+    require(startTime > block.timestamp, "Match starting time should be in the future");
     if (fixtureToTotalBets[fixtureId][1] == 0 && fixtureToTotalBets[fixtureId][2] == 0) {
       activePools.push(fixtureId);
       FixtureInfo memory fixtureInfo = FixtureInfo(startTime, endTime);
@@ -139,7 +139,7 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
   event Withdraw(string indexed fixtureId, address indexed _address, uint value);
 
   function withdraw(string calldata fixtureId) external {
-    // TODO: check endtime < current
+    require(fixtureToFixtureInfo[fixtureId].endTime < block.timestamp, "Match hasn't finished yet");
     uint calculatedAmount = claimableAmount(fixtureId);
 
     if (calculatedAmount > 0) {
@@ -151,7 +151,6 @@ contract ScoreCast is FunctionsClient, ConfirmedOwner {
   }
 
   function claimableAmount(string calldata fixtureId) public returns(uint){
-    // TODO: check endtime < current
     (uint totalHome, uint totalAway) = getBets(fixtureId);
     uint result = uint(bytes32(fixtureToResults[fixtureId]));
     uint ownAmount = fixtureToBets[fixtureId][msg.sender][result];

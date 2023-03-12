@@ -23,7 +23,8 @@ const Nav = () => {
               <div className="flex">
                 {/* Home */}
                 <div className="text-2xl mr-5 font-semibold lg:mr-11 md:inline-flex inline-flex sm:hidden justify-center items-center align-middle">
-                <Image src={"/logo.png"} alt="ScoreCast" width={150} height={42} quality={100} />
+                {/* <Image src={"/logo.png"} alt="ScoreCast" width={150} height={42} quality={100} /> */}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-black">ScoreCast.wtf</span>
                 </div>
                 {/* Menu items */}
                 <div className="hidden sm:flex sm:space-x-11">

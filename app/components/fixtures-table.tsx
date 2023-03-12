@@ -37,7 +37,7 @@ const FixturesTable = ({ fixtures }: Props) => {
               </div>
             </div>
             <div className="text-center justify-center text-gray-600">
-              <div className="flex justify-center text-center items-center">
+              <div className="flex justify-center text-center font-semibold items-center">
                 <ClockIcon className="inline mr-1 h-4 w-4" />
                 {new Date(fixture.date * 1000).toUTCString()}
               </div>

@@ -114,7 +114,6 @@ const Match = () => {
       args: [fixture.id.toString(), ethers.utils.getAddress(userAddress)],
     })
       .then((result: any) => {
-        console.log(result);
         setOnChainInfo({
           dates: {
             startTime: result.fixtureInfo.startTime.toNumber(),
@@ -308,6 +307,7 @@ const Match = () => {
                     currentUserClaimed: onChainInfo.ownBets.claimed.home,
                     isPoolOpen,
                     status: fixture.status,
+                    goals: fixture.home.goals,
                     result: onChainInfo.result,
                     side: "home",
                     isConnected,
@@ -318,28 +318,22 @@ const Match = () => {
                     handleWithdrawal,
                   }}
                 />
-                <div>
-                  {!isConnected && (
-                    <div className="text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
-                      <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
-                      Connect your wallet to start betting
-                    </div>
-                  )}
+                <div className="space-y-5">
                   {isConnected && fixture.status === "Not Started" && !isPoolOpen && (
-                    <div className="text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                    <div className="text-gray-700 flex-col justify-center text-center items-center">
                       <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
                       No bets yet. Place a bet to start a pool
                     </div>
                   )}
                   {isConnected && fixture.status != "Not Started" && fixture.status != "Match Finished" && (
-                    <div className="text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
+                    <div className="text-gray-700 flex-col justify-center text-center items-center">
                       <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
                       You can&apos;t place any bets if the match is in progress
                     </div>
                   )}
-                  {(true ||
-                    (isConnected && fixture.status === "Match Finished" && onChainInfo.result === 0 && isPoolOpen)) && (
-                    <div className="divide-y divide-blue-600 w-full border text-blue-900 mt-7 py-4 rounded border-blue-600 bg-blue-50">
+                  {(false ||
+                    (isPoolOpen)) && (
+                    <div className="divide-y divide-blue-600 w-full border text-blue-900 py-4 rounded border-blue-600 bg-blue-50">
                       <div className="flex justify-center text-center items-center">
                         <Image src="/functions.png" className="mr-3" alt="Chainlink functions" width={20} height={20} />
                         Verified on-chain data
@@ -402,6 +396,12 @@ const Match = () => {
                       </div>
                     </div>
                   )}
+                  {!isConnected && (
+                    <div className="text-gray-700 flex-col justify-center text-center items-center">
+                      <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
+                      Connect your wallet to start betting
+                    </div>
+                  )}
                 </div>
                 <TeamSection
                   {...{
@@ -417,6 +417,7 @@ const Match = () => {
                     currentUserClaimed: onChainInfo.ownBets.claimed.away,
                     isPoolOpen,
                     status: fixture.status,
+                    goals: fixture.away.goals,
                     result: onChainInfo.result,
                     side: "away",
                     isConnected,
