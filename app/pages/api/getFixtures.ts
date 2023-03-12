@@ -32,6 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log("No cached data found");
       }
     }
+  } else {
+    refreshCache = true;
   }
 
   if (refreshCache) {
