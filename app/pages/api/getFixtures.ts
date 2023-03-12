@@ -6,8 +6,7 @@ import axios from "axios";
 const readFile = fs.promises.readFile;
 const writeFile = fs.promises.writeFile;
 
-const cachePath = path.join(process.cwd(), "/data/cache");
-const cacheFile = resolve(cachePath);
+const cacheFile = resolve("/tmp/ScoreCastCache");
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   let fixtures: any;
