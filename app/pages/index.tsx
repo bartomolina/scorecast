@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import Head from "next/head";
-import axios from "axios";
 import { useScoreCast } from "../components/scorecast-context";
 import FixturesTable from "../components/fixtures-table";
 

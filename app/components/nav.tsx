@@ -7,7 +7,7 @@ import ActiveLink from "./active-link";
 
 const navigation = [
   { name: "All matches", href: "/" },
-  { name: "Active pools", href: "/active" },
+  { name: "Active pools", href: "/pools" },
   { name: "About", href: "/about" },
 ];
 

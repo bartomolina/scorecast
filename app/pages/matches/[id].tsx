@@ -1,3 +1,4 @@
+import { IFixture } from "../../global";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -12,10 +13,11 @@ import { useNotifications } from "../../components/notifications-context";
 import ConsumerContractJSON from "../../lib/contracts/consumer-contract.json";
 import TeamSection from "../../components/match-team-section";
 
-const fetcher = (url) => axios.get(url).then((res) => res.data);
+const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 const Match = () => {
   const router = useRouter();
+  const [hasMounted, setHasMounted] = useState(false);
   const { data } = useSWR("/api/getFixtures", fetcher);
   const [onChainInfo, setOnChainInfo] = useState({
     dates: {
@@ -59,8 +61,8 @@ const Match = () => {
   }, [onChainInfo]);
 
   const fixture = useMemo(() => {
-    return data ? data.find((f) => f.id === parseInt(router.query.id as string)) : null;
-  }, [data, router.isReady]);
+    return data ? data.find((f: IFixture) => f.id === parseInt(router.query.id as string)) : null;
+  }, [data, router.query.id]);
 
   useEffect(() => {
     if (fixture) {
@@ -82,8 +84,8 @@ const Match = () => {
   };
 
   const calculatePayout = () => {
-    const homeBets = parseFloat(onChainInfo.totalBets.home) + betData.home;
-    const awayBets = parseFloat(onChainInfo.totalBets.away) + betData.away;
+    const homeBets = onChainInfo.totalBets.home + betData.home;
+    const awayBets = onChainInfo.totalBets.away + betData.away;
     const totalBets = homeBets + awayBets;
 
     setPayout({
@@ -111,7 +113,7 @@ const Match = () => {
       // @ts-ignore
       args: [fixture.id.toString(), ethers.utils.getAddress(userAddress)],
     })
-      .then((result) => {
+      .then((result: any) => {
         console.log(result);
         setOnChainInfo({
           dates: {
@@ -243,6 +245,16 @@ const Match = () => {
     }
   };
 
+  // To prevent hydration errors:
+  // https://codingwithmanny.medium.com/understanding-hydration-errors-in-nextjs-13-with-a-web3-wallet-connection-8155c340fbd5
+  // https://www.joshwcomeau.com/react/the-perils-of-rehydration/#the-solution
+  useEffect(() => {
+    if (!hasMounted) {
+      setHasMounted(true);
+    }
+  }, [hasMounted]);
+  if (!hasMounted) return null;
+
   return (
     <>
       <Head>
@@ -322,7 +334,7 @@ const Match = () => {
                   {isConnected && fixture.status != "Not Started" && fixture.status != "Match Finished" && (
                     <div className="text-gray-700 text-lg font-semibold flex-col justify-center text-center items-center">
                       <ExclamationTriangleIcon className="inline mr-1 h-6 w-6 text-yellow-500" />
-                      You can't place any bets if the match is in progress
+                      You can&apos;t place any bets if the match is in progress
                     </div>
                   )}
                   {(true ||

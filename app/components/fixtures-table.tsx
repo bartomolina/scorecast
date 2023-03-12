@@ -15,7 +15,7 @@ const FixturesTable = ({ fixtures }: Props) => {
     <div className="space-y-4">
       {fixtures.map((fixture) => (
         <div
-          key={fixture.id}
+          key={fixture.id.toString()}
           className="overflow-hidden flex p-0.5 items-center rounded-lg bg-gradient-to-br from-green-400 to-blue-600 shadow hover:shadow-md hover:-translate-y-1 transform transition"
         >
           {fixture.active && (
@@ -26,7 +26,7 @@ const FixturesTable = ({ fixtures }: Props) => {
           <Link
             href={`/matches/${fixture.id}`}
             className={`${
-              fixture.active ? "bg-yellow-100 " : "bg-white "
+              fixture.active ? "bg-gradient-to-br from-white to-yellow-100 " : "bg-white "
             }grid grid-cols-3 gap-4 rounded-md p-5 shadow hover:cursor-pointer h-full w-full`}
           >
             <div className="grid grid-cols-2 items-center">

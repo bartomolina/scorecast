@@ -1,6 +1,30 @@
-import { useMemo } from "react";
+import { ITeamInfo } from "../global";
+import { FormEvent, useMemo } from "react";
 import Image from "next/image";
 import { truncateEthAddress } from "../lib/utils";
+
+type Props = {
+  team: ITeamInfo,
+  address: `0x${string}`,
+  state: number,
+  otherState: number,
+  payout: number,
+  totalBets: number,
+  currentPool: number,
+  otherPool: number,
+  currentUser: number,
+  currentUserClaimed: number,
+  isPoolOpen: boolean,
+  status: string,
+  result: number,
+  side: "home" | "away",
+  isConnected: boolean,
+  isLoading: boolean,
+  isWaitingTx: boolean,
+  handleFormChange: (event: FormEvent<HTMLInputElement>) => void,
+  handleBet: (event: FormEvent, bet: Number) => void,
+  handleWithdrawal: (event: FormEvent) => void,
+};
 
 const TeamSection = ({
   team,
@@ -23,7 +47,7 @@ const TeamSection = ({
   handleFormChange,
   handleBet,
   handleWithdrawal,
-}) => {
+}: Props) => {
   const calculatedPayout = useMemo(() => {
     return (currentUser * (currentPool + otherPool)) / currentPool;
   }, [currentUser, currentPool, otherPool]);

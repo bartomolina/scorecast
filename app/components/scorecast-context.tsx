@@ -6,7 +6,7 @@ import { readContract } from "@wagmi/core";
 
 import ConsumerContractJSON from "../lib/contracts/consumer-contract.json";
 
-const fetcher = (url) => axios.get(url).then((res) => res.data);
+const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 const ScoreCastContext = createContext({
   fixtures: [] as IFixture[],
@@ -27,8 +27,8 @@ export const ScoreCastProvider = ({ children }: React.PropsWithChildren) => {
         functionName: "getActivePools",
       }).then((pools: any) => {
         // Transform returned array from ethers into an objects array
-        pools.forEach((fixtureId) => {
-          data.find((fixture) => fixture.id === parseInt(fixtureId)).active = true;
+        pools.forEach((fixtureId: string) => {
+          data.find((fixture: any) => fixture.id === parseInt(fixtureId)).active = true;
         });
         setFixtures(data);
       });

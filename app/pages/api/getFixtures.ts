@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       })
       .then((response) => {
-        let filteredFixtures = response.data.response.map((fixture) => {
+        let filteredFixtures = response.data.response.map((fixture: any) => {
           return {
             id: fixture.fixture.id,
             date: fixture.fixture.timestamp,
