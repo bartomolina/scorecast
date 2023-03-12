@@ -1,12 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
-import { resolve } from "path";
+import path, { resolve } from "path";
 import axios from "axios";
 
 const readFile = fs.promises.readFile;
 const writeFile = fs.promises.writeFile;
 
-const cacheFile = resolve("./data/cache");
+const cachePath = path.join(process.cwd(), "/data/cache");
+const cacheFile = resolve(cachePath);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   let fixtures: any;
