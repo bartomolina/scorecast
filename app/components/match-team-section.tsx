@@ -61,7 +61,7 @@ const TeamSection = ({
         <Image src={team.logo} alt={team.name} width={160} height={160} quality={100} />
       </div>
       <div className="mt-5 text-gray-900">
-        {(false || (isConnected && isPoolOpen)) && (
+        {isPoolOpen && (
           <>
             <div className="text-5xl font-medium text-gray-800 flex justify-center text-center items-center">
               <Image src="/matic.png" alt="MATIC" width={30} height={30} />
@@ -71,37 +71,44 @@ const TeamSection = ({
               <span className="text-gray-500">payout</span>
               <span className={`ml-2${state || otherState ? " text-orange-500 font-medium" : ""}`}>{payout}x</span>
             </div>
-            <div className="mt-7 flex justify-center text-center items-center">
-              <span>{truncateEthAddress(address)}</span>
-              <span className={"ml-2"}>
-                <div className="flex justify-center text-center items-center">
-                  <Image src="/matic.png" alt="MATIC" width={10} height={10} />
-                  <div className="ml-0.5 font-semibold">{currentUser}</div>
-                </div>
-              </span>
-            </div>
-            {(false ||
-              (currentUserClaimed === 0 &&
-                currentUser > 0 &&
-                ((result === 1 && side === "home") || (result === 2 && side === "away")))) && (
-              <button
-                type="button"
-                disabled={!isConnected || isLoading}
-                onClick={handleWithdrawal}
-                className={
-                  "mt-2 h-8 px-2 font-medium rounded-lg text-white bg-gradient-to-r from-green-500 via-green-600 to-green-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300"
-                }
-              >
-                <div className="flex justify-center text-center items-center">
-                  <div>Claim</div>
-                  <Image className="ml-2 mr-1" src="/matic.png" alt="MATIC" width={10} height={10} />
-                  <div>{calculatedPayout}</div>
-                </div>
-              </button>
+            {isConnected && (
+              <div className="mt-7 flex justify-center text-center items-center">
+                <span>{truncateEthAddress(address)}</span>
+                <span className={"ml-2"}>
+                  <div className="flex justify-center text-center items-center">
+                    <Image src="/matic.png" alt="MATIC" width={10} height={10} />
+                    <div className="ml-0.5 font-semibold">{currentUser}</div>
+                  </div>
+                </span>
+              </div>
+            )}
+            {currentUserClaimed === 0 &&
+              currentUser > 0 &&
+              ((result === 1 && side === "home") || (result === 2 && side === "away")) && (
+                <button
+                  type="button"
+                  disabled={!isConnected || isLoading}
+                  onClick={handleWithdrawal}
+                  className={
+                    "mt-3 h-10 px-2 font-medium rounded-lg text-white bg-gradient-to-r from-green-500 via-green-600 to-green-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300"
+                  }
+                >
+                  <div className="flex justify-center text-center items-center">
+                    <div>Claim</div>
+                    <Image className="ml-2 mr-1" src="/matic.png" alt="MATIC" width={10} height={10} />
+                    <div>{calculatedPayout}</div>
+                  </div>
+                </button>
+              )}
+            {currentUserClaimed != 0 && (
+              <div className="flex justify-center text-center items-center">
+                <Image src="/matic.png" alt="MATIC" width={10} height={10} />
+                <div className="ml-0.5 font-semibold">{currentUserClaimed} Claimed!</div>
+              </div>
             )}
           </>
         )}
-        {(false || (isConnected && status === "Not Started")) && (
+        {isConnected && status === "Not Started" && (
           <form action="#" method="POST" className="mt-2">
             <label htmlFor={side} className="sr-only">
               {`Bet ${side} team`}

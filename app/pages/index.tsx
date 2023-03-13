@@ -1,57 +1,46 @@
-import { useMemo, useState } from "react";
 import Head from "next/head";
-import { useScoreCast } from "../components/scorecast-context";
-import FixturesTable from "../components/fixtures-table";
+import Image from "next/image";
+import Link from "next/link";
 
-const Home = () => {
-  const { fixtures: data } = useScoreCast();
-  const [roundFilter, setRoundFilter] = useState("Regular Season - 25");
-
-  const fixtures = useMemo(() => {
-    let filteredFixtures = data || [];
-    if (roundFilter) {
-      return filteredFixtures.filter((f) => f.round === roundFilter);
-    }
-    return filteredFixtures;
-  }, [data, roundFilter]);
-
-  const rounds = useMemo(() => {
-    if (data) {
-      return new Set(data.map((f) => f.round));
-    }
-  }, [data]);
-
-  return (
-    <>
-      <Head>
-        <title>ScoreCast.wtf</title>
-        <meta name="description" content="ScoreCast" />
-      </Head>
-      <header className="mx-auto max-w-6xl px-6 lg:px-8 py-10 text-center">
-        <h1 className="text-5xl font-semibold leading-tight tracking-tight text-gray-900">Matches</h1>
-        <div className="mt-4">
-          <label htmlFor="round" className="sr-only">
-            Round
-          </label>
-          <select
-            id="round"
-            name="status"
-            className="rounded-md border border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-base"
-            onChange={(event) => setRoundFilter(event.target.value)}
-            value={roundFilter}
-          >
-            <option value="">round</option>
-            {rounds && [...Array.from(rounds)].map((round) => <option key={round}>{round}</option>)}
-          </select>
-        </div>
-      </header>
-      <div className="pb-14">
-        <div className="mx-auto max-w-6xl sm:px-6 lg:px-8 py-6">
-          <FixturesTable fixtures={fixtures} />
+const About = () => (
+  <>
+    <Head>
+      <title>About - ScoreCast.wtf</title>
+      <meta name="description" content="ScoreCast" />
+    </Head>
+    <header className="mx-auto max-w-6xl px-6 lg:px-8 pt-4 pb-8 sr-only">
+      <h1 className="text-5xl font-thin leading-tight tracking-tight text-gray-900">Home</h1>
+    </header>
+    {/* <div className="relative isolate overflow-hidden bg-white">
+  <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl lg:flex-shrink-0 pb-14 lg:pt-8"> */}
+    <div className="bg-transparent mx-auto max-w-7xl overflow-hidden px-6 pt-10 pb-24 sm:pb-32 lg:flex lg:py-40 lg:px-8">
+      <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl lg:flex-shrink-0 lg:pt-8">
+        <h1 className="mt-10 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">Permissionless betting</h1>
+        <p className="mt-6 text-lg leading-8 text-gray-600">
+          Permissionless on-chain betting using ChainLink Functions.
+        </p>
+        <div className="mt-10 flex items-center gap-x-6">
+          <Link href={`/matches`} className="text-sm font-semibold leading-6 text-gray-900">
+            All matches <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </div>
-    </>
-  );
-};
+      <div className="mx-auto block max-w-2xl ml-10">
+        <div className="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none">
+          <div className="-m-2 rounded-xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 lg:-m-4 lg:rounded-2xl lg:p-2">
+            <Image
+              src="/screenshot3.png"
+              alt="ScoreCast screenshot"
+              width={2432}
+              height={1442}
+              quality={100}
+              className="w-[76rem] rounded-md shadow-2xl ring-1 ring-gray-900/10"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </>
+);
 
-export default Home;
+export default About;

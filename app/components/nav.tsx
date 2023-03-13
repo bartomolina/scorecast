@@ -6,9 +6,9 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import ActiveLink from "./active-link";
 
 const navigation = [
-  { name: "All matches", href: "/" },
+  { name: "Home", href: "/" },
+  { name: "All matches", href: "/matches" },
   { name: "Active pools", href: "/pools" },
-  { name: "About", href: "/about" },
 ];
 
 const Nav = () => {
