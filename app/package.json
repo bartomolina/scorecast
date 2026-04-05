@@ -16,17 +16,17 @@
     "@types/node": "18.11.15",
     "@types/react": "18.0.26",
     "@types/react-dom": "18.0.9",
-    "axios": "^1.3.4",
-    "connectkit": "^1.1.1",
+    "axios": "^1.13.6",
+    "connectkit": "^1.9.2",
     "eslint": "8.29.0",
     "eslint-config-next": "13.0.7",
-    "ethers": "^5.7.2",
-    "next": "13.0.7",
+    "ethers": "^6.16.0",
+    "next": "15.5.14",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "swr": "^2.0.4",
     "typescript": "4.9.4",
-    "wagmi": "^0.9.6"
+    "wagmi": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.3",
